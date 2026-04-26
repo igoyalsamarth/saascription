@@ -44,7 +44,7 @@ export default function BlogIndexPage() {
               <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm transition-shadow hover:shadow-md">
                 <Link
                   aria-label={post.title}
-                  className="relative block aspect-[16/10] w-full shrink-0 overflow-hidden bg-muted/80"
+                  className="relative block aspect-16/10 w-full shrink-0 overflow-hidden bg-muted/80"
                   href={`/blog/${post.slug}/`}
                 >
                   {imageSrc ? (

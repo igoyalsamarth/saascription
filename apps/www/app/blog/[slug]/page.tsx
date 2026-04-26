@@ -159,7 +159,7 @@ export default async function BlogPostPage(props: PageProps) {
         </div>
         <article className="rounded-xl">
           {absoluteImage ? (
-            <div className="border-border relative mb-2 aspect-[1200/420] min-h-[200px] w-full max-h-[50vh] overflow-hidden rounded-xl border sm:aspect-[2/1] sm:max-h-[420px] sm:min-h-0">
+            <div className="border-border relative mb-2 aspect-1200/420 min-h-[200px] w-full max-h-[50vh] overflow-hidden rounded-xl border sm:aspect-2/1 sm:max-h-[420px] sm:min-h-0">
               <Image
                 alt={doc.title}
                 className="object-cover object-left"

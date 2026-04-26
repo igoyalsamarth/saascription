@@ -33,7 +33,7 @@ export default function Home() {
           aria-labelledby="hero-heading"
         >
           <div
-            className="pointer-events-none absolute -top-32 left-1/2 h-[480px] w-[800px] -translate-x-1/2 rounded-full bg-primary/[0.12] blur-3xl dark:bg-primary/20"
+            className="pointer-events-none absolute -top-32 left-1/2 h-[480px] w-[800px] -translate-x-1/2 rounded-full bg-primary/12 blur-3xl dark:bg-primary/20"
             aria-hidden
           />
           <div
@@ -102,7 +102,7 @@ export default function Home() {
           aria-labelledby="cta-heading"
         >
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="overflow-hidden rounded-3xl border border-border/80 bg-gradient-to-br from-primary/10 via-card to-card px-6 py-12 sm:px-10 sm:py-14">
+            <div className="overflow-hidden rounded-3xl border border-border/80 bg-linear-to-br from-primary/10 via-card to-card px-6 py-12 sm:px-10 sm:py-14">
               <h2
                 id="cta-heading"
                 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl"
