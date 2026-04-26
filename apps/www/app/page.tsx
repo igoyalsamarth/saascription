@@ -1,65 +1,135 @@
-import Image from "next/image";
+import type { Metadata } from "next";
+import Link from "next/link";
+
+import { FeatureGrid } from "@/components/landing/feature-grid";
+import { HomeBlogTeaser } from "@/components/landing/home-blog-teaser";
+import { SiteFooter } from "@/components/landing/site-footer";
+import { SiteHeader } from "@/components/landing/site-header";
+import { buttonVariants } from "@/components/ui/button";
+import { getAllBlogListItems } from "@/lib/blog/loader";
+import { appSignInUrl } from "@/lib/site";
+import { cn } from "@/lib/utils";
+
+export const metadata: Metadata = {
+  title: { absolute: "Saascription | SaaS subscription management" },
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "Saascription | SaaS subscription management",
+    description:
+      "Saascription helps you track tools, renewals, and spend across the company—so finance and IT stay aligned, and nothing renews on surprise terms.",
+    type: "website",
+  },
+};
 
 export default function Home() {
+  const allPosts = getAllBlogListItems();
+  const homePosts = allPosts.slice(0, 3);
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="flex min-h-0 flex-1 flex-col">
+      <SiteHeader />
+      <main>
+        <section
+          className="relative overflow-hidden border-b border-border/60"
+          aria-labelledby="hero-heading"
+        >
+          <div
+            className="pointer-events-none absolute -top-32 left-1/2 h-[480px] w-[800px] -translate-x-1/2 rounded-full bg-primary/[0.12] blur-3xl dark:bg-primary/20"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute -right-32 top-24 h-64 w-64 rounded-full bg-chart-2/20 blur-2xl"
+            aria-hidden
+          />
+          <div className="relative mx-auto max-w-6xl px-4 pb-20 pt-16 sm:px-6 sm:pb-28 sm:pt-20 md:pt-24">
+            <p className="text-sm font-medium text-primary">
+              Subscription management for SaaS teams
+            </p>
+            <h1
+              id="hero-heading"
+              className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-foreground sm:text-5xl sm:leading-tight"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+              All your subscriptions, one calm place
+            </h1>
+            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
+              Saascription helps you track tools, renewals, and spend across the
+              company—so finance and IT stay aligned, and nothing renews on
+              surprise terms.
+            </p>
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Link
+                className={cn(
+                  buttonVariants({ variant: "default" }),
+                  "h-10 px-5 text-sm sm:h-11 sm:px-6",
+                )}
+                href={appSignInUrl}
+              >
+                Sign in
+              </Link>
+              <Link
+                className={cn(
+                  buttonVariants({ variant: "outline" }),
+                  "h-10 px-5 text-sm sm:h-11 sm:px-6",
+                )}
+                href="/blog/"
+              >
+                Read the blog
+              </Link>
+            </div>
+            <dl className="mt-16 grid max-w-2xl gap-6 sm:grid-cols-3">
+              {[
+                { k: "Tools tracked", v: "All vendors, one list" },
+                { k: "Renewals", v: "Dates and owners in view" },
+                { k: "Your data", v: "Designed for clarity" },
+              ].map((row) => (
+                <div
+                  key={row.k}
+                  className="rounded-xl border border-border/60 bg-card/50 px-4 py-3 backdrop-blur-sm"
+                >
+                  <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    {row.k}
+                  </dt>
+                  <dd className="mt-1 text-sm font-medium text-foreground">
+                    {row.v}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </section>
+        <FeatureGrid />
+        <section
+          className="border-b border-border/60 py-20 sm:py-24"
+          aria-labelledby="cta-heading"
+        >
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="overflow-hidden rounded-3xl border border-border/80 bg-gradient-to-br from-primary/10 via-card to-card px-6 py-12 sm:px-10 sm:py-14">
+              <h2
+                id="cta-heading"
+                className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl"
+              >
+                Ready to get subscription chaos under control?
+              </h2>
+              <p className="mt-3 max-w-xl text-muted-foreground">
+                Create an account to be first in line as we open early access.
+                No spam—just product updates you can use.
+              </p>
+              <div className="mt-6">
+                <Link
+                  className={cn(
+                    buttonVariants({ variant: "default" }),
+                    "h-10 px-5 text-sm",
+                  )}
+                  href={appSignInUrl}
+                >
+                  Sign in
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+        <HomeBlogTeaser posts={homePosts} />
       </main>
+      <SiteFooter />
     </div>
   );
 }
