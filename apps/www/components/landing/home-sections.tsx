@@ -379,7 +379,7 @@ export function HomeLandingSections() {
                   key={step.n}
                   className="relative flex flex-col items-center text-center"
                 >
-                  <span className="relative z-[1] flex size-10 shrink-0 items-center justify-center rounded-full border-2 border-primary bg-background text-sm font-bold text-primary">
+                  <span className="relative z-1 flex size-10 shrink-0 items-center justify-center rounded-full border-2 border-primary bg-background text-sm font-bold text-primary">
                     {step.n}
                   </span>
                   <h3 className="mt-4 font-semibold text-foreground">
@@ -391,20 +391,6 @@ export function HomeLandingSections() {
                 </li>
               ))}
             </ol>
-          </div>
-
-          <div className="mx-auto mt-20 max-w-2xl text-center">
-            <h2 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-              Join the future of{" "}
-              <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-primary">
-                subscription
-              </span>{" "}
-              management
-            </h2>
-            <p className="mt-4 text-muted-foreground">
-              Stop wasting money on unused tools. Start optimizing your SaaS
-              stack today.
-            </p>
           </div>
         </div>
       </section>
