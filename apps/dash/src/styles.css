@@ -1,0 +1,24 @@
+/* Same families as apps/www: `Geist` + `Geist_Mono` (next/font/google) */
+@import "@fontsource/geist-sans/400.css";
+@import "@fontsource/geist-sans/500.css";
+@import "@fontsource/geist-sans/600.css";
+@import "@fontsource/geist-sans/700.css";
+@import "@fontsource/geist-mono/400.css";
+@import "@fontsource/geist-mono/500.css";
+
+@import "@saascription/ui/styles.css";
+
+/* Tailwind: scan this app for class names */
+@source "./**/*.{tsx,ts}";
+/* Shared shadcn UI — keep utilities for sidebar, charts, etc. in the build */
+@source "../../../packages/ui/src/**/*.{tsx,ts}";
+
+@layer base {
+  :root {
+    --font-sans: "Geist Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-geist-sans: var(--font-sans);
+    --font-geist-mono:
+      "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      "Liberation Mono", "Courier New", monospace;
+  }
+}

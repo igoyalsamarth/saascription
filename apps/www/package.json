@@ -6,8 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "biome check",
-    "format": "biome format --write",
+    "lint": "biome check .",
+    "format": "biome format --write .",
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
@@ -29,13 +29,14 @@
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.4.5",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "schema-dts": "^2.0.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "5.9.2"
   },
   "ignoreScripts": [
     "sharp",

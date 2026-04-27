@@ -19,6 +19,8 @@ out
 
 # production
 build
+dist
+.output
 
 # misc
 .DS_Store
@@ -35,6 +37,9 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# cloudflare / vite local
+.wrangler
 
 # typescript
 *.tsbuildinfo

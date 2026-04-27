@@ -6,12 +6,15 @@
     "dev": "turbo run dev",
     "www:dev": "turbo run dev --filter=www",
     "www:build": "turbo run build --filter=www",
+    "dash:dev": "turbo run dev --filter=dash",
+    "dash:build": "turbo run build --filter=dash",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check": "biome check .",
+    "format": "biome format --write .",
     "check-types": "turbo run check-types"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.2.0",
+    "@biomejs/biome": "2.4.5",
     "turbo": "^2.9.6",
     "typescript": "5.9.2"
   },
