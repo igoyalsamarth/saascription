@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 
 import { getSiteUrl } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -40,14 +41,20 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={cn(
         geistSans.className,
         geistSans.variable,
         geistMono.variable,
-        "h-full antialiased dark",
+        "h-full antialiased",
       )}
     >
-      <body className="flex min-h-full flex-col font-sans">{children}</body>
+      <body className="flex min-h-full flex-col font-sans">
+        <Script id="theme-init" strategy="beforeInteractive">
+          {`(function(){try{var t=localStorage.getItem("theme");if(t==="light"){document.documentElement.classList.remove("dark");}else{document.documentElement.classList.add("dark");}}catch(e){document.documentElement.classList.add("dark");}})();`}
+        </Script>
+        {children}
+      </body>
     </html>
   );
 }

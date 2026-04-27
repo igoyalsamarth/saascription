@@ -117,6 +117,45 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+@keyframes landing-dashboard-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes landing-ai-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--primary) 28%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 4px color-mix(in oklch, var(--primary) 14%, transparent),
+      0 0 20px -4px color-mix(in oklch, var(--primary) 35%, transparent);
+  }
+}
+
+@layer utilities {
+  .animate-landing-dashboard-float {
+    animation: landing-dashboard-float 4.5s ease-in-out infinite;
+  }
+
+  .animate-landing-ai-pulse {
+    animation: landing-ai-pulse 2.5s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-landing-dashboard-float,
+    .animate-landing-ai-pulse {
+      animation: none;
+    }
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
