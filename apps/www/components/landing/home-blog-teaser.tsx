@@ -1,7 +1,6 @@
+import { buttonVariants } from "@saascription/ui";
 import Image from "next/image";
 import Link from "next/link";
-
-import { buttonVariants } from "@/components/ui/button";
 import { blogPostImageAbsoluteUrl } from "@/lib/blog/image-url";
 import type { BlogListItem } from "@/lib/blog/types";
 import { cn } from "@/lib/utils";

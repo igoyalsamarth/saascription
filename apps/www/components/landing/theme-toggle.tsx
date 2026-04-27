@@ -2,9 +2,8 @@
 
 import { Moon01Icon, Sun01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@saascription/ui";
 import { useEffect, useState } from "react";
-
-import { Button } from "@/components/ui/button";
 
 export function ThemeToggle() {
   const [dark, setDark] = useState(true);

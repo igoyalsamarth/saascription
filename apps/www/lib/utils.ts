@@ -1,11 +1,6 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-
 import { getSiteUrl } from "./site";
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+export { cn } from "@saascription/ui";
 
 /**
  * Resolves a path to an absolute URL using the current site origin.

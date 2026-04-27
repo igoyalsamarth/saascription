@@ -50,9 +50,6 @@ export default function RootLayout({
       )}
     >
       <body className="flex min-h-full flex-col font-sans">
-        <Script id="theme-init" strategy="beforeInteractive">
-          {`(function(){try{var t=localStorage.getItem("theme");if(t==="light"){document.documentElement.classList.remove("dark");}else{document.documentElement.classList.add("dark");}}catch(e){document.documentElement.classList.add("dark");}})();`}
-        </Script>
         {children}
       </body>
     </html>

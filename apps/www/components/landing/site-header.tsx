@@ -1,9 +1,8 @@
 import { SparklesIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { buttonVariants } from "@saascription/ui";
 import Link from "next/link";
-
 import { ThemeToggle } from "@/components/landing/theme-toggle";
-import { buttonVariants } from "@/components/ui/button";
 import { appSignInUrl } from "@/lib/site";
 import { cn } from "@/lib/utils";
 

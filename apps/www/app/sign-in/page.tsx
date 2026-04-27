@@ -1,9 +1,8 @@
+import { buttonVariants } from "@saascription/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
-
 import { SiteFooter } from "@/components/landing/site-footer";
 import { SiteHeader } from "@/components/landing/site-header";
-import { buttonVariants } from "@/components/ui/button";
 import { appSignInUrl } from "@/lib/site";
 import { cn } from "@/lib/utils";
 

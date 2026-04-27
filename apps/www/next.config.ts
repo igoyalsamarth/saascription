@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
   output: "export",
   trailingSlash: true,
+  transpilePackages: ["@saascription/ui"],
   images: {
     unoptimized: true,
   },

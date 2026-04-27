@@ -1,5 +1,6 @@
 import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Badge, buttonVariants } from "@saascription/ui";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,11 +10,8 @@ import readingTime from "reading-time";
 import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
 import type { BlogPosting, BreadcrumbList, WithContext } from "schema-dts";
-
 import { BlogTableOfContents } from "@/components/blog/blog-table-of-contents";
 import { MobileToc } from "@/components/blog/mobile-toc";
-import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
 import { formatBlogDateMedium } from "@/lib/blog/dates";
 import { blogPostImageAbsoluteUrl } from "@/lib/blog/image-url";
 import { getPostBySlug, getPostSlugsFromDisk } from "@/lib/blog/loader";

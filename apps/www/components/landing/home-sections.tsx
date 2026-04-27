@@ -14,9 +14,8 @@ import {
   Target02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { buttonVariants } from "@saascription/ui";
 import Link from "next/link";
-
-import { buttonVariants } from "@/components/ui/button";
 import { appSignInUrl } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
