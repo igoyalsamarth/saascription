@@ -17,7 +17,6 @@
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.61.3",
-    "@cloudflare/vite-plugin": "^1.26.0",
     "@fontsource/geist-mono": "^5.2.7",
     "@fontsource/geist-sans": "^5.2.5",
     "@hugeicons/core-free-icons": "^4.1.1",
