@@ -22,7 +22,7 @@ import {
 } from "@saascription/ui";
 import { Link, useRouterState } from "@tanstack/react-router";
 
-import ClerkHeader from "../integrations/clerk/header-user";
+import ClerkHeader from "../providers/clerk-header-user";
 
 type NavItem = {
   title: string;

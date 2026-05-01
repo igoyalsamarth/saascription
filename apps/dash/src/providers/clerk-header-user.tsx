@@ -1,6 +1,6 @@
 import { SignedIn, UserButton } from "@clerk/clerk-react";
 
-export default function HeaderUser() {
+export default function ClerkHeaderUser() {
   return (
     <SignedIn>
       <UserButton />

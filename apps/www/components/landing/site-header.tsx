@@ -10,6 +10,7 @@ const mainNavLinks = [
   { href: "/#features", label: "Features" },
   { href: "/#testimonials", label: "Testimonials" },
   { href: "/#pricing", label: "Pricing" },
+  { href: "/blog", label: "Blog" },
 ] as const;
 
 export function SiteHeader() {

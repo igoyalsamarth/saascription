@@ -1,7 +1,7 @@
 import { buttonVariants, cn } from "@saascription/ui";
 import { Link } from "@tanstack/react-router";
 
-import ClerkHeader from "../integrations/clerk/header-user";
+import ClerkHeader from "../providers/clerk-header-user";
 import ThemeToggle from "./ThemeToggle";
 
 export default function Header() {
