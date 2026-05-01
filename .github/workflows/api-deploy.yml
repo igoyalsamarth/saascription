@@ -1,0 +1,51 @@
+# Deploy Cloudflare Worker for apps/api only.
+#
+# GitHub repo → Settings → Secrets and variables → Actions, add:
+#   CLOUDFLARE_API_TOKEN   — API token with Workers Scripts:Edit, D1, Queues as needed
+#   CLOUDFLARE_ACCOUNT_ID  — Workers dashboard → account id
+#   CLERK_WEBHOOK_SIGNING_SECRET — required by wrangler.jsonc secrets.required (Clerk whsec_…)
+#
+# Disable or disconnect Cloudflare Workers Builds for this Worker if it still triggers on push
+# to avoid double deploys.
+
+name: Deploy API
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/api/**"
+      - "bun.lock"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-api-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.6
+
+      - name: Install monorepo dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Deploy api Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/api
+          packageManager: bun
+          command: deploy --minify
+          secrets: |
+            CLERK_WEBHOOK_SIGNING_SECRET
+        env:
+          CLERK_WEBHOOK_SIGNING_SECRET: ${{ secrets.CLERK_WEBHOOK_SIGNING_SECRET }}
