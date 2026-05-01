@@ -8,6 +8,8 @@
     "www:build": "turbo run build --filter=www",
     "dash:dev": "turbo run dev --filter=dash",
     "dash:build": "turbo run build --filter=dash",
+    "api:dev": "turbo run dev --filter=api",
+    "api:deploy": "turbo run deploy --filter=api",
     "lint": "turbo run lint",
     "check": "biome check .",
     "format": "biome format --write .",
