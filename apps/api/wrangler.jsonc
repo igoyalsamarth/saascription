@@ -1,0 +1,24 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-01",
+  "secrets": {
+    "required": ["CLERK_WEBHOOK_SIGNING_SECRET"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "saascription",
+      "database_id": "64e7aa75-10be-436e-a5b7-fd09a277aeca"
+    }
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "QUEUE",
+        "queue": "saascription"
+      }
+    ]
+  }
+}
