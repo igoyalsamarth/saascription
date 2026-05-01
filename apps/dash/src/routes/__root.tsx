@@ -3,7 +3,7 @@ import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
 import AppChrome from "../components/AppChrome";
-import ClerkProvider from "../integrations/clerk/provider";
+import ClerkProvider from "../providers/clerk-provider";
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -17,7 +17,7 @@ function RootComponent() {
           <AppChrome>
             <Outlet />
           </AppChrome>
-          <TanStackDevtools
+          {/* <TanStackDevtools
             config={{
               position: "bottom-right",
             }}
@@ -27,7 +27,7 @@ function RootComponent() {
                 render: <TanStackRouterDevtoolsPanel />,
               },
             ]}
-          />
+          /> */}
         </div>
       </ClerkProvider>
     </div>
