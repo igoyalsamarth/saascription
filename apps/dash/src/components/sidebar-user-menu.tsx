@@ -14,11 +14,14 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@saascription/ui";
 import { useNavigate } from "@tanstack/react-router";
 
 import { type UserMe, useUserMe } from "@/services/user";
+
+import ThemeToggle from "./ThemeToggle";
 
 function initialsFromProfile(user: UserMe | undefined): string {
   if (!user) {
@@ -69,7 +72,14 @@ export function SidebarUserMenu() {
         >
           <HugeiconsIcon icon={MoreVerticalIcon} className="size-4" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" side="top" className="min-w-40">
+        <DropdownMenuContent align="end" side="top" className="min-w-48">
+          <div
+            className="px-2 pb-2 pt-1.5"
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <ThemeToggle className="w-full" />
+          </div>
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={() => {
               void navigate({ to: "/settings" });

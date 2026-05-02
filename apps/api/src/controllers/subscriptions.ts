@@ -5,6 +5,13 @@ import {
 } from "./workspace-emails";
 import { getWorkspaceForOwner } from "./workspaces";
 
+export type SubscriptionStatus =
+  | "new"
+  | "old"
+  | "cancelled"
+  | "expired"
+  | "failed";
+
 export type SubscriptionRow = {
   id: string;
   saasId: string;
@@ -14,13 +21,16 @@ export type SubscriptionRow = {
   interval: "monthly" | "yearly" | "custom";
   /** Next billing / renewal day, `YYYY-MM-DD` (also stored as `next_billing_at`). */
   nextBillingAt: string;
+  status: SubscriptionStatus;
+  /** ISO-ish datetime string when `status === 'cancelled'`. */
+  cancelledAt?: string | null;
 };
 
 const MAX_ROWS = 200;
 const MAX_NAME_LEN = 200;
 const MAX_AMOUNT_LEN = 32;
 const MAX_ID_LEN = 64;
-/** Fills required `sub_type` for user-entered rows; category is no longer collected. */
+/** Fills required `sub_type` for user-entered rows. */
 const USER_ENTERED_SUB_TYPE = "entered" as const;
 
 const ENTERED_STATUS = "old" as const;
@@ -79,81 +89,138 @@ function isValidNextBillingDate(s: string): boolean {
   );
 }
 
-/** Request body shape (saasId from client is ignored; name is used to resolve catalog). */
-export function parseSubscriptionsBody(
-  body: unknown,
-): { ok: true; rows: SubscriptionRow[] } | { ok: false; error: string } {
-  if (!body || typeof body !== "object") {
+export type ParseSubscriptionPayloadResult =
+  | { ok: true; row: SubscriptionRow }
+  | { ok: false; error: string };
+
+/**
+ * Validates one subscription object.
+ * If `requireId` is false and `id` is missing, generates a new UUID.
+ */
+export function parseSubscriptionPayload(
+  item: unknown,
+  options: { requireId: boolean },
+): ParseSubscriptionPayloadResult {
+  if (!item || typeof item !== "object") {
     return { ok: false, error: "Expected JSON object" };
   }
-  const subs = (body as Record<string, unknown>).subscriptions;
-  if (!Array.isArray(subs)) {
-    return { ok: false, error: "subscriptions must be an array" };
-  }
-  if (subs.length > MAX_ROWS) {
-    return { ok: false, error: `At most ${MAX_ROWS} subscriptions allowed` };
-  }
-
-  const rows: SubscriptionRow[] = [];
-  for (let i = 0; i < subs.length; i++) {
-    const item = subs[i];
-    if (!item || typeof item !== "object") {
-      return { ok: false, error: `subscriptions[${i}] must be an object` };
-    }
-    const o = item as Record<string, unknown>;
-    const id = typeof o.id === "string" ? o.id.trim() : "";
-    const name = typeof o.name === "string" ? o.name.trim() : "";
-    const amount = typeof o.amount === "string" ? o.amount.trim() : "";
-    const nextBillingAt =
-      typeof o.nextBillingAt === "string" ? o.nextBillingAt.trim() : "";
-    const interval = parseInterval(o.interval);
-
+  const o = item as Record<string, unknown>;
+  let id =
+    typeof o.id === "string" && o.id.trim() ? o.id.trim() : "";
+  if (options.requireId) {
     if (!id || id.length > MAX_ID_LEN) {
-      return { ok: false, error: `subscriptions[${i}].id is invalid` };
+      return { ok: false, error: "id is invalid" };
     }
-    if (!name || name.length > MAX_NAME_LEN) {
-      return {
-        ok: false,
-        error: `subscriptions[${i}].name is required (max ${MAX_NAME_LEN} chars)`,
-      };
-    }
-    if (!amount || amount.length > MAX_AMOUNT_LEN || !amountOk(amount)) {
-      return {
-        ok: false,
-        error: `subscriptions[${i}].amount must be a valid non-negative number`,
-      };
-    }
-    if (!interval) {
-      return {
-        ok: false,
-        error: `subscriptions[${i}].interval must be monthly, yearly, or custom`,
-      };
-    }
-    if (!nextBillingAt || !isValidNextBillingDate(nextBillingAt)) {
-      return {
-        ok: false,
-        error: `subscriptions[${i}].nextBillingAt must be a valid date (YYYY-MM-DD)`,
-      };
-    }
-    rows.push({
+  } else if (!id) {
+    id = crypto.randomUUID();
+  } else if (id.length > MAX_ID_LEN) {
+    return { ok: false, error: "id is invalid" };
+  }
+
+  const name = typeof o.name === "string" ? o.name.trim() : "";
+  const amount = typeof o.amount === "string" ? o.amount.trim() : "";
+  const nextBillingAt =
+    typeof o.nextBillingAt === "string" ? o.nextBillingAt.trim() : "";
+  const interval = parseInterval(o.interval);
+
+  if (!name || name.length > MAX_NAME_LEN) {
+    return {
+      ok: false,
+      error: `name is required (max ${MAX_NAME_LEN} chars)`,
+    };
+  }
+  if (!amount || amount.length > MAX_AMOUNT_LEN || !amountOk(amount)) {
+    return {
+      ok: false,
+      error: "amount must be a valid non-negative number",
+    };
+  }
+  if (!interval) {
+    return {
+      ok: false,
+      error: "interval must be monthly, yearly, or custom",
+    };
+  }
+  if (!nextBillingAt || !isValidNextBillingDate(nextBillingAt)) {
+    return {
+      ok: false,
+      error: "nextBillingAt must be a valid date (YYYY-MM-DD)",
+    };
+  }
+
+  return {
+    ok: true,
+    row: {
       id,
       saasId: "",
       name,
       amount,
       interval,
       nextBillingAt,
-    });
-  }
+      status: ENTERED_STATUS,
+    },
+  };
+}
 
-  const seen = new Set<string>();
-  for (const r of rows) {
-    if (seen.has(r.id)) {
-      return { ok: false, error: `Duplicate subscription id: ${r.id}` };
+/** PATCH body: editable fields only (not status). */
+export type SubscriptionPatchFields = Pick<
+  SubscriptionRow,
+  "name" | "amount" | "interval" | "nextBillingAt"
+>;
+
+/** PATCH body: name, amount, interval, nextBillingAt only (no id). */
+export function parseSubscriptionFieldsBody(
+  body: unknown,
+):
+  | {
+      ok: true;
+      fields: SubscriptionPatchFields;
     }
-    seen.add(r.id);
+  | { ok: false; error: string } {
+  if (!body || typeof body !== "object") {
+    return { ok: false, error: "Expected JSON object" };
+  }
+  const o = body as Record<string, unknown>;
+  const name = typeof o.name === "string" ? o.name.trim() : "";
+  const amount = typeof o.amount === "string" ? o.amount.trim() : "";
+  const nextBillingAt =
+    typeof o.nextBillingAt === "string" ? o.nextBillingAt.trim() : "";
+  const interval = parseInterval(o.interval);
+
+  if (!name || name.length > MAX_NAME_LEN) {
+    return {
+      ok: false,
+      error: `name is required (max ${MAX_NAME_LEN} chars)`,
+    };
+  }
+  if (!amount || amount.length > MAX_AMOUNT_LEN || !amountOk(amount)) {
+    return {
+      ok: false,
+      error: "amount must be a valid non-negative number",
+    };
+  }
+  if (!interval) {
+    return {
+      ok: false,
+      error: "interval must be monthly, yearly, or custom",
+    };
+  }
+  if (!nextBillingAt || !isValidNextBillingDate(nextBillingAt)) {
+    return {
+      ok: false,
+      error: "nextBillingAt must be a valid date (YYYY-MM-DD)",
+    };
   }
 
-  return { ok: true, rows };
+  return {
+    ok: true,
+    fields: {
+      name,
+      amount,
+      interval,
+      nextBillingAt,
+    },
+  };
 }
 
 function normalizeNextBillingAt(raw: string | null | undefined): string {
@@ -167,61 +234,54 @@ function normalizeNextBillingAt(raw: string | null | undefined): string {
   return t;
 }
 
-export async function listSubscriptionsForOwner(
-  db: D1Database,
-  ownerUserId: string,
-): Promise<SubscriptionRow[] | "no_workspace"> {
-  const ws = await getWorkspaceForOwner(db, ownerUserId);
-  if (!ws) {
-    return "no_workspace";
+function parseSubscriptionStatus(raw: string | null): SubscriptionStatus {
+  if (
+    raw === "new" ||
+    raw === "old" ||
+    raw === "cancelled" ||
+    raw === "expired" ||
+    raw === "failed"
+  ) {
+    return raw;
   }
-
-  const res = await db
-    .prepare(
-      `SELECT s.id AS sid, s.saas_id, sa.name AS saas_name, s.cost,
-              s.billing_interval, s.next_billing_at
-       FROM subscriptions s
-       INNER JOIN workspace_emails we ON we.id = s.workspace_email_id
-       INNER JOIN workspaces w ON w.id = we.workspace_id
-       INNER JOIN saas sa ON sa.id = s.saas_id
-       WHERE w.owner_user_id = ?
-       ORDER BY s.created_at ASC`,
-    )
-    .bind(ownerUserId)
-    .all<{
-      sid: string;
-      saas_id: string;
-      saas_name: string;
-      cost: number | null;
-      billing_interval: string | null;
-      next_billing_at: string | null;
-    }>();
-
-  const out: SubscriptionRow[] = [];
-  for (const r of res.results ?? []) {
-    const interval = parseInterval(r.billing_interval ?? "monthly");
-    if (!interval) {
-      continue;
-    }
-    const nb = normalizeNextBillingAt(r.next_billing_at);
-    out.push({
-      id: r.sid,
-      saasId: r.saas_id,
-      name: r.saas_name,
-      amount: costCentsToAmountString(r.cost),
-      interval,
-      nextBillingAt: nb && isValidNextBillingDate(nb) ? nb : "",
-    });
-  }
-  return out;
+  return "old";
 }
 
-export async function replaceSubscriptionsForOwner(
+function mapDbRowToSubscriptionRow(r: {
+  sid: string;
+  saas_id: string;
+  saas_name: string;
+  cost: number | null;
+  billing_interval: string | null;
+  next_billing_at: string | null;
+  status: string | null;
+  cancelled_at: string | null;
+}): SubscriptionRow | null {
+  const interval = parseInterval(r.billing_interval ?? "monthly");
+  if (!interval) {
+    return null;
+  }
+  const nb = normalizeNextBillingAt(r.next_billing_at);
+  const status = parseSubscriptionStatus(r.status);
+  return {
+    id: r.sid,
+    saasId: r.saas_id,
+    name: r.saas_name,
+    amount: costCentsToAmountString(r.cost),
+    interval,
+    nextBillingAt: nb && isValidNextBillingDate(nb) ? nb : "",
+    status,
+    cancelledAt: r.cancelled_at?.trim() || null,
+  };
+}
+
+async function resolveWorkspaceMailForOwner(
   db: D1Database,
   ownerUserId: string,
-  rows: SubscriptionRow[],
 ): Promise<
-  SubscriptionRow[] | "no_workspace" | "no_user_email"
+  | { ok: true; wsId: string; workspaceEmailId: string }
+  | "no_workspace"
+  | "no_user_email"
 > {
   const ws = await getWorkspaceForOwner(db, ownerUserId);
   if (!ws) {
@@ -241,73 +301,278 @@ export async function replaceSubscriptionsForOwner(
     workspaceEmailId = backfill.id;
   }
 
-  const resolved: {
-    id: string;
-    saasId: string;
-    name: string;
-    amount: string;
-    interval: string;
-    nextBillingAt: string;
-    costCents: number;
-  }[] = [];
+  return { ok: true, wsId: ws.id, workspaceEmailId };
+}
 
-  for (const r of rows) {
-    const saas = await findOrCreateSaasByName(db, r.name);
-    resolved.push({
-      id: r.id,
+async function countSubscriptionsForWorkspace(
+  db: D1Database,
+  workspaceId: string,
+): Promise<number> {
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS c FROM subscriptions s
+       INNER JOIN workspace_emails we ON we.id = s.workspace_email_id
+       WHERE we.workspace_id = ?`,
+    )
+    .bind(workspaceId)
+    .first<{ c: number }>();
+  return row?.c ?? 0;
+}
+
+export async function listSubscriptionsForOwner(
+  db: D1Database,
+  ownerUserId: string,
+): Promise<SubscriptionRow[] | "no_workspace"> {
+  const ws = await getWorkspaceForOwner(db, ownerUserId);
+  if (!ws) {
+    return "no_workspace";
+  }
+
+  const res = await db
+    .prepare(
+      `SELECT s.id AS sid, s.saas_id, sa.name AS saas_name, s.cost,
+              s.billing_interval, s.next_billing_at, s.status, s.cancelled_at
+       FROM subscriptions s
+       INNER JOIN workspace_emails we ON we.id = s.workspace_email_id
+       INNER JOIN workspaces w ON w.id = we.workspace_id
+       INNER JOIN saas sa ON sa.id = s.saas_id
+       WHERE w.owner_user_id = ?
+       ORDER BY s.created_at ASC`,
+    )
+    .bind(ownerUserId)
+    .all<{
+      sid: string;
+      saas_id: string;
+      saas_name: string;
+      cost: number | null;
+      billing_interval: string | null;
+      next_billing_at: string | null;
+      status: string | null;
+      cancelled_at: string | null;
+    }>();
+
+  const out: SubscriptionRow[] = [];
+  for (const r of res.results ?? []) {
+    const mapped = mapDbRowToSubscriptionRow(r);
+    if (mapped) {
+      out.push(mapped);
+    }
+  }
+  return out;
+}
+
+async function getSubscriptionRowByIdForOwner(
+  db: D1Database,
+  ownerUserId: string,
+  subscriptionId: string,
+): Promise<SubscriptionRow | null> {
+  const r = await db
+    .prepare(
+      `SELECT s.id AS sid, s.saas_id, sa.name AS saas_name, s.cost,
+              s.billing_interval, s.next_billing_at, s.status, s.cancelled_at
+       FROM subscriptions s
+       INNER JOIN workspace_emails we ON we.id = s.workspace_email_id
+       INNER JOIN workspaces w ON w.id = we.workspace_id
+       INNER JOIN saas sa ON sa.id = s.saas_id
+       WHERE s.id = ? AND w.owner_user_id = ?`,
+    )
+    .bind(subscriptionId, ownerUserId)
+    .first<{
+      sid: string;
+      saas_id: string;
+      saas_name: string;
+      cost: number | null;
+      billing_interval: string | null;
+      next_billing_at: string | null;
+      status: string | null;
+      cancelled_at: string | null;
+    }>();
+  if (!r) {
+    return null;
+  }
+  return mapDbRowToSubscriptionRow(r);
+}
+
+export async function createSubscriptionForOwner(
+  db: D1Database,
+  ownerUserId: string,
+  row: SubscriptionRow,
+): Promise<
+  SubscriptionRow | "no_workspace" | "no_user_email" | "limit_reached"
+> {
+  const ctx = await resolveWorkspaceMailForOwner(db, ownerUserId);
+  if (ctx === "no_workspace" || ctx === "no_user_email") {
+    return ctx;
+  }
+
+  const n = await countSubscriptionsForWorkspace(db, ctx.wsId);
+  if (n >= MAX_ROWS) {
+    return "limit_reached";
+  }
+
+  const saas = await findOrCreateSaasByName(db, row.name);
+  const costCents = amountStringToCostCents(row.amount);
+
+  await db
+    .prepare(
+      `INSERT INTO subscriptions (
+         id, workspace_email_id, saas_id, sub_type, status,
+         cost, currency, billing_interval, subscribed_at,
+         next_billing_at,
+         created_at, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, 'USD', ?, datetime('now'), ?, datetime('now'), datetime('now'))`,
+    )
+    .bind(
+      row.id,
+      ctx.workspaceEmailId,
+      saas.id,
+      USER_ENTERED_SUB_TYPE,
+      ENTERED_STATUS,
+      costCents,
+      row.interval,
+      row.nextBillingAt,
+    )
+    .run();
+
+  const fresh = await getSubscriptionRowByIdForOwner(db, ownerUserId, row.id);
+  return (
+    fresh ?? {
+      id: row.id,
       saasId: saas.id,
       name: saas.name,
-      amount: r.amount,
-      interval: r.interval,
-      nextBillingAt: r.nextBillingAt,
-      costCents: amountStringToCostCents(r.amount),
-    });
+      amount: row.amount,
+      interval: row.interval,
+      nextBillingAt: row.nextBillingAt,
+      status: ENTERED_STATUS,
+      cancelledAt: null,
+    }
+  );
+}
+
+export async function updateSubscriptionForOwner(
+  db: D1Database,
+  ownerUserId: string,
+  subscriptionId: string,
+  fields: SubscriptionPatchFields,
+): Promise<
+  SubscriptionRow | "no_workspace" | "not_found" | "cannot_edit_cancelled"
+> {
+  const ws = await getWorkspaceForOwner(db, ownerUserId);
+  if (!ws) {
+    return "no_workspace";
   }
 
-  const del = db
+  const existing = await getSubscriptionRowByIdForOwner(
+    db,
+    ownerUserId,
+    subscriptionId,
+  );
+  if (!existing) {
+    return "not_found";
+  }
+  if (existing.status === "cancelled") {
+    return "cannot_edit_cancelled";
+  }
+
+  const saas = await findOrCreateSaasByName(db, fields.name);
+  const costCents = amountStringToCostCents(fields.amount);
+
+  await db
     .prepare(
-      `DELETE FROM subscriptions
-       WHERE workspace_email_id IN (
-         SELECT id FROM workspace_emails WHERE workspace_id = ?
+      `UPDATE subscriptions SET
+         saas_id = ?,
+         cost = ?,
+         billing_interval = ?,
+         next_billing_at = ?,
+         updated_at = datetime('now')
+       WHERE id = ?
+       AND workspace_email_id IN (
+         SELECT we.id FROM workspace_emails we
+         INNER JOIN workspaces w ON w.id = we.workspace_id
+         WHERE w.owner_user_id = ?
        )`,
     )
-    .bind(ws.id);
+    .bind(
+      saas.id,
+      costCents,
+      fields.interval,
+      fields.nextBillingAt,
+      subscriptionId,
+      ownerUserId,
+    )
+    .run();
 
-  if (resolved.length === 0) {
-    await del.run();
-    return [];
+  const fresh = await getSubscriptionRowByIdForOwner(
+    db,
+    ownerUserId,
+    subscriptionId,
+  );
+  return fresh ?? "not_found";
+}
+
+export async function deleteSubscriptionForOwner(
+  db: D1Database,
+  ownerUserId: string,
+  subscriptionId: string,
+): Promise<boolean> {
+  const res = await db
+    .prepare(
+      `DELETE FROM subscriptions
+       WHERE id = ?
+       AND workspace_email_id IN (
+         SELECT we.id FROM workspace_emails we
+         INNER JOIN workspaces w ON w.id = we.workspace_id
+         WHERE w.owner_user_id = ?
+       )`,
+    )
+    .bind(subscriptionId, ownerUserId)
+    .run();
+
+  return (res.meta?.changes ?? 0) > 0;
+}
+
+export async function cancelSubscriptionForOwner(
+  db: D1Database,
+  ownerUserId: string,
+  subscriptionId: string,
+): Promise<SubscriptionRow | "no_workspace" | "not_found"> {
+  const ws = await getWorkspaceForOwner(db, ownerUserId);
+  if (!ws) {
+    return "no_workspace";
   }
 
-  const inserts = resolved.map((r) =>
-    db
-      .prepare(
-        `INSERT INTO subscriptions (
-           id, workspace_email_id, saas_id, sub_type, status,
-           cost, currency, billing_interval, subscribed_at,
-           next_billing_at,
-           created_at, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, 'USD', ?, datetime('now'), ?, datetime('now'), datetime('now'))`,
-      )
-      .bind(
-        r.id,
-        workspaceEmailId,
-        r.saasId,
-        USER_ENTERED_SUB_TYPE,
-        ENTERED_STATUS,
-        r.costCents,
-        r.interval,
-        r.nextBillingAt,
-      ),
+  const existing = await getSubscriptionRowByIdForOwner(
+    db,
+    ownerUserId,
+    subscriptionId,
   );
+  if (!existing) {
+    return "not_found";
+  }
+  if (existing.status === "cancelled") {
+    return existing;
+  }
 
-  await db.batch([del, ...inserts]);
+  await db
+    .prepare(
+      `UPDATE subscriptions SET
+         status = 'cancelled',
+         cancelled_at = datetime('now'),
+         updated_at = datetime('now')
+       WHERE id = ?
+       AND workspace_email_id IN (
+         SELECT we.id FROM workspace_emails we
+         INNER JOIN workspaces w ON w.id = we.workspace_id
+         WHERE w.owner_user_id = ?
+       )`,
+    )
+    .bind(subscriptionId, ownerUserId)
+    .run();
 
-  return resolved.map((r) => ({
-    id: r.id,
-    saasId: r.saasId,
-    name: r.name,
-    amount: r.amount,
-    interval: r.interval as SubscriptionRow["interval"],
-    nextBillingAt: r.nextBillingAt,
-  }));
+  const fresh = await getSubscriptionRowByIdForOwner(
+    db,
+    ownerUserId,
+    subscriptionId,
+  );
+  return fresh ?? "not_found";
 }

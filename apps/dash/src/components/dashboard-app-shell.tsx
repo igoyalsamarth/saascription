@@ -3,7 +3,6 @@ import { useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
 import { AppSidebar } from "./app-sidebar";
-import ThemeToggle from "./ThemeToggle";
 
 function useIsAiRoute() {
   return useRouterState({
@@ -26,9 +25,6 @@ export function DashboardAppShell({ children }: { children: ReactNode }) {
       >
         {children}
       </SidebarInset>
-      <div className="pointer-events-auto fixed right-4 bottom-4 z-50 md:right-5 md:bottom-5">
-        <ThemeToggle />
-      </div>
     </>
   );
 }

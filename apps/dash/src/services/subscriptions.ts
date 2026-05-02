@@ -17,20 +17,24 @@ export type WorkspaceSubscriptionsResponse = {
   subscriptions: SubscriptionRow[];
 };
 
-export type PutWorkspaceSubscriptionsResponse = {
+export type CreateSubscriptionResponse = {
   ok: true;
-  subscriptions: SubscriptionRow[];
+  subscription: SubscriptionRow;
 };
 
-function bodyForPut(rows: SubscriptionRow[]) {
+export type UpdateSubscriptionResponse = {
+  ok: true;
+  subscription: SubscriptionRow;
+};
+
+function patchBody(
+  row: Omit<SubscriptionRow, "id" | "saasId" | "status" | "cancelledAt">,
+) {
   return {
-    subscriptions: rows.map((r) => ({
-      id: r.id,
-      name: r.name,
-      amount: r.amount,
-      interval: r.interval,
-      nextBillingAt: r.nextBillingAt,
-    })),
+    name: row.name,
+    amount: row.amount,
+    interval: row.interval,
+    nextBillingAt: row.nextBillingAt,
   };
 }
 
@@ -46,12 +50,12 @@ export function useWorkspaceSubscriptionsQuery() {
   });
 }
 
-export function useReplaceWorkspaceSubscriptionsMutation(
+export function useCreateSubscriptionMutation(
   options?: Omit<
     UseMutationOptions<
-      PutWorkspaceSubscriptionsResponse,
+      CreateSubscriptionResponse,
       Error,
-      SubscriptionRow[],
+      SubscriptionRow,
       unknown
     >,
     "mutationFn"
@@ -61,17 +65,127 @@ export function useReplaceWorkspaceSubscriptionsMutation(
   const queryClient = useQueryClient();
   return useMutation({
     ...options,
-    mutationFn: async (rows) => {
+    mutationFn: async (row) => {
       return client
-        .put("workspaces/me/subscriptions", {
-          json: bodyForPut(rows),
+        .post("workspaces/me/subscriptions", {
+          json: {
+            id: row.id,
+            name: row.name,
+            amount: row.amount,
+            interval: row.interval,
+            nextBillingAt: row.nextBillingAt,
+          },
         })
-        .json<PutWorkspaceSubscriptionsResponse>();
+        .json<CreateSubscriptionResponse>();
     },
     onSuccess: async (data, variables, onMutateResult, context) => {
       queryClient.setQueryData<WorkspaceSubscriptionsResponse>(
         subscriptionKeys.me(),
-        { subscriptions: data.subscriptions },
+        (old) => ({
+          subscriptions: [...(old?.subscriptions ?? []), data.subscription],
+        }),
+      );
+      await options?.onSuccess?.(data, variables, onMutateResult, context);
+    },
+  });
+}
+
+export function useUpdateSubscriptionMutation(
+  options?: Omit<
+    UseMutationOptions<
+      UpdateSubscriptionResponse,
+      Error,
+      { id: string; row: SubscriptionRow },
+      unknown
+    >,
+    "mutationFn"
+  >,
+) {
+  const client = useClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    ...options,
+    mutationFn: async ({ id, row }) => {
+      return client
+        .patch(`workspaces/me/subscriptions/${id}`, {
+          json: patchBody(row),
+        })
+        .json<UpdateSubscriptionResponse>();
+    },
+    onSuccess: async (data, variables, onMutateResult, context) => {
+      queryClient.setQueryData<WorkspaceSubscriptionsResponse>(
+        subscriptionKeys.me(),
+        (old) => ({
+          subscriptions: (old?.subscriptions ?? []).map((s) =>
+            s.id === data.subscription.id ? data.subscription : s,
+          ),
+        }),
+      );
+      await options?.onSuccess?.(data, variables, onMutateResult, context);
+    },
+  });
+}
+
+export function useDeleteSubscriptionMutation(
+  options?: Omit<
+    UseMutationOptions<{ ok: true }, Error, string, unknown>,
+    "mutationFn"
+  >,
+) {
+  const client = useClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    ...options,
+    mutationFn: async (id: string) => {
+      return client
+        .delete(`workspaces/me/subscriptions/${id}`)
+        .json<{ ok: true }>();
+    },
+    onSuccess: async (data, id, onMutateResult, context) => {
+      queryClient.setQueryData<WorkspaceSubscriptionsResponse>(
+        subscriptionKeys.me(),
+        (old) => ({
+          subscriptions: (old?.subscriptions ?? []).filter((s) => s.id !== id),
+        }),
+      );
+      await options?.onSuccess?.(data, id, onMutateResult, context);
+    },
+  });
+}
+
+export type CancelSubscriptionResponse = {
+  ok: true;
+  subscription: SubscriptionRow;
+};
+
+export function useCancelSubscriptionMutation(
+  options?: Omit<
+    UseMutationOptions<
+      CancelSubscriptionResponse,
+      Error,
+      string,
+      unknown
+    >,
+    "mutationFn"
+  >,
+) {
+  const client = useClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    ...options,
+    mutationFn: async (id: string) => {
+      return client
+        .post(`workspaces/me/subscriptions/${id}/cancel`)
+        .json<CancelSubscriptionResponse>();
+    },
+    onSuccess: async (data, variables, onMutateResult, context) => {
+      queryClient.setQueryData<WorkspaceSubscriptionsResponse>(
+        subscriptionKeys.me(),
+        (old) => ({
+          subscriptions: (old?.subscriptions ?? []).map((s) =>
+            s.id === data.subscription.id ? data.subscription : s,
+          ),
+        }),
       );
       await options?.onSuccess?.(data, variables, onMutateResult, context);
     },

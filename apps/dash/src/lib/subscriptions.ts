@@ -1,5 +1,13 @@
 export type BillingInterval = "monthly" | "yearly" | "custom";
 
+/** Mirrors API `SubscriptionStatus`. */
+export type SubscriptionStatus =
+  | "new"
+  | "old"
+  | "cancelled"
+  | "expired"
+  | "failed";
+
 export type SubscriptionRow = {
   id: string;
   /** Set after load/save from the API (catalog id). */
@@ -11,6 +19,9 @@ export type SubscriptionRow = {
   interval: BillingInterval;
   /** Next billing date from calendar; `YYYY-MM-DD`, persisted as `next_billing_at`. */
   nextBillingAt: string;
+  status: SubscriptionStatus;
+  /** Present when `status === 'cancelled'` (API datetime string). */
+  cancelledAt?: string | null;
 };
 
 export function isoDateLocal(d = new Date()): string {
@@ -27,6 +38,8 @@ export function emptySubscriptionRow(): SubscriptionRow {
     amount: "",
     interval: "monthly",
     nextBillingAt: isoDateLocal(),
+    status: "old",
+    cancelledAt: null,
   };
 }
 
@@ -66,6 +79,8 @@ export function serializeSubscriptionsSnapshot(
       amount: r.amount.trim(),
       interval: r.interval,
       nextBillingAt: r.nextBillingAt.trim(),
+      status: r.status,
+      cancelledAt: r.cancelledAt ?? null,
     })),
   );
 }
@@ -104,4 +119,12 @@ export function validateSubscriptions(
     }
   }
   return out;
+}
+
+/** Returns field errors for one row, or null if valid. */
+export function validateSubscriptionRow(
+  row: SubscriptionRow,
+): RowFieldErrors | null {
+  const all = validateSubscriptions([row]);
+  return all[row.id] ?? null;
 }
