@@ -1,4 +1,3 @@
-import { useUser } from "@clerk/clerk-react";
 import {
   ArrowRight01Icon,
   Calendar01Icon,
@@ -38,6 +37,7 @@ import {
   PieChart,
   XAxis,
 } from "recharts";
+import { useUserMe } from "@/services/user";
 
 import {
   DASH_SCROLL_CONTENT,
@@ -112,7 +112,7 @@ const highestSpends = [
 ] as const;
 
 export function SpendsAnalytics() {
-  const { user } = useUser();
+  const { data: user } = useUserMe();
   const [rangeLabel, setRangeLabel] = useState("Last 6 months");
 
   const userLabel = user?.id

@@ -1,4 +1,5 @@
 import { useAuth } from "@clerk/clerk-react";
+import { SidebarProvider, TooltipProvider } from "@saascription/ui";
 import { Navigate, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
@@ -19,8 +20,8 @@ function RequireAuth({ children }: { children: ReactNode }) {
 
   if (!isLoaded) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center bg-black px-4">
-        <p className="text-sm text-white">Loading…</p>
+      <div className="flex flex-1 flex-col items-center justify-center bg-background px-4">
+        <p className="text-sm text-muted-foreground">Loading…</p>
       </div>
     );
   }
@@ -76,9 +77,13 @@ export default function AppChrome({ children }: { children: ReactNode }) {
   return (
     <BareChrome>
       <RequireAuth>
-        <WorkspaceGate>
-          <DashboardAppShell>{children}</DashboardAppShell>
-        </WorkspaceGate>
+        <TooltipProvider>
+          <SidebarProvider className="h-svh min-h-0 max-h-svh w-full overflow-hidden">
+            <WorkspaceGate>
+              <DashboardAppShell>{children}</DashboardAppShell>
+            </WorkspaceGate>
+          </SidebarProvider>
+        </TooltipProvider>
       </RequireAuth>
     </BareChrome>
   );

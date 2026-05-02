@@ -1,4 +1,3 @@
-import { useUser } from "@clerk/clerk-react";
 import {
   Calendar01Icon,
   Dollar01Icon,
@@ -40,6 +39,7 @@ import {
   PieChart,
   XAxis,
 } from "recharts";
+import { useUserMe } from "@/services/user";
 
 import {
   DASH_SCROLL_CONTENT,
@@ -96,7 +96,7 @@ const renewals = [
 ];
 
 export function DashboardOverview() {
-  const { user } = useUser();
+  const { data: user } = useUserMe();
   const [spendWindow, setSpendWindow] = useState<"6m" | "1y">("6m");
   const [rangeLabel, setRangeLabel] = useState("Last 30 days");
 

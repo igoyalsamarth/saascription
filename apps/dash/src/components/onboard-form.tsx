@@ -1,4 +1,3 @@
-import { useUser } from "@clerk/clerk-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Button,
@@ -9,35 +8,28 @@ import {
   CardHeader,
   CardTitle,
   Field,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
   Input,
 } from "@saascription/ui";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { api } from "#/lib/api-client";
+import { useCreateWorkspaceMutation } from "@/services/workspace";
 
-const onboardSchema = z.object({
+const schema = z.object({
   workspaceName: z.string().min(1, "Required").max(120),
   displayName: z.string().min(1, "Required").max(120),
 });
 
-type OnboardFormValues = z.infer<typeof onboardSchema>;
+type Values = z.infer<typeof schema>;
 
 export function OnboardForm() {
-  const { user } = useUser();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const seededName = useRef(false);
-
-  const form = useForm<OnboardFormValues>({
-    resolver: zodResolver(onboardSchema),
+  const form = useForm<Values>({
+    resolver: zodResolver(schema),
     defaultValues: {
       workspaceName: "Personal",
       displayName: "",
@@ -48,44 +40,15 @@ export function OnboardForm() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    setValue,
   } = form;
 
-  useEffect(() => {
-    if (!user || seededName.current) {
-      return;
-    }
-    const fromClerk = [user.firstName, user.lastName]
-      .filter(Boolean)
-      .join(" ")
-      .trim();
-    if (fromClerk) {
-      setValue("displayName", fromClerk);
-      seededName.current = true;
-    }
-  }, [user, setValue]);
-
-  const createWorkspace = useMutation({
-    mutationFn: async (values: OnboardFormValues) => {
-      return api
-        .post("workspaces", {
-          json: {
-            workspaceName: values.workspaceName,
-            displayName: values.displayName,
-          },
-        })
-        .json<{
-          ok: boolean;
-          workspace: { id: string; name: string | null };
-        }>();
-    },
+  const createWorkspace = useCreateWorkspaceMutation({
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["workspace", "me"] });
       await navigate({ to: "/", replace: true });
     },
   });
 
-  const onSubmit = (values: OnboardFormValues) => {
+  const onSubmit = (values: Values) => {
     createWorkspace.mutate(values);
   };
 
@@ -96,13 +59,12 @@ export function OnboardForm() {
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)} className="w-full">
         <Card className="mx-auto w-full max-w-md border-border/80 shadow-sm">
           <CardHeader className="flex flex-col gap-1">
             <CardTitle className="text-lg">Create your workspace</CardTitle>
             <CardDescription>
-              You need a workspace to use the dashboard. You can change the name
-              later.
+              You need a workspace to use the dashboard.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -117,9 +79,6 @@ export function OnboardForm() {
                   aria-invalid={errors.workspaceName ? true : undefined}
                   {...register("workspaceName")}
                 />
-                <FieldDescription>
-                  Shown in the app and on invoices.
-                </FieldDescription>
                 {errors.workspaceName?.message ? (
                   <FieldError>{errors.workspaceName.message}</FieldError>
                 ) : null}
@@ -134,9 +93,6 @@ export function OnboardForm() {
                   aria-invalid={errors.displayName ? true : undefined}
                   {...register("displayName")}
                 />
-                <FieldDescription>
-                  How we&apos;ll address you in the product.
-                </FieldDescription>
                 {errors.displayName?.message ? (
                   <FieldError>{errors.displayName.message}</FieldError>
                 ) : null}

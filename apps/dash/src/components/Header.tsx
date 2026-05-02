@@ -1,7 +1,6 @@
 import { buttonVariants, cn } from "@saascription/ui";
 import { Link } from "@tanstack/react-router";
 
-import ClerkHeader from "../providers/clerk-header-user";
 import ThemeToggle from "./ThemeToggle";
 
 export default function Header() {
@@ -20,7 +19,6 @@ export default function Header() {
         </Link>
 
         <div className="flex items-center gap-2">
-          <ClerkHeader />
           <ThemeToggle />
         </div>
       </nav>

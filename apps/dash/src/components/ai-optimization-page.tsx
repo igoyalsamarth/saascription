@@ -1,4 +1,3 @@
-import { useUser } from "@clerk/clerk-react";
 import {
   ArtificialIntelligence01Icon,
   ChartHistogramIcon,
@@ -31,6 +30,7 @@ import {
 } from "@saascription/ui";
 import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts";
+import { useUserMe } from "@/services/user";
 
 import {
   DASH_SCROLL_CONTENT,
@@ -102,12 +102,12 @@ const serviceCompare = [
 ] as const;
 
 export function AiOptimizationPage() {
-  const { user } = useUser();
+  const { data: user } = useUserMe();
   const [input, setInput] = useState("");
 
   const userLabel = user?.id
     ? `User ID: ${user.id.length > 20 ? `${user.id.slice(0, 10)}…` : user.id}`
-    : "User ID: 0";
+    : "Signed in";
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col bg-[linear-gradient(to_top,rgb(0,0,0),var(--background)_100%)]">

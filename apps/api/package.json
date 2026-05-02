@@ -2,7 +2,7 @@
   "name": "api",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev --remote",
+    "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify",
     "check-types": "tsc --noEmit",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@hono/clerk-auth": "^3.1.1",
+    "@clerk/backend": "^3.4.4",
     "hono": "^4.12.16",
     "svix": "^1.92.2"
   },

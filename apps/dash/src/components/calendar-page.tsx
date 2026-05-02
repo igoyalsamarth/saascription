@@ -1,4 +1,3 @@
-import { useUser } from "@clerk/clerk-react";
 import {
   Add01Icon,
   Alert01Icon,
@@ -26,6 +25,7 @@ import {
   SidebarTrigger,
 } from "@saascription/ui";
 import { useCallback, useMemo, useState } from "react";
+import { useUserMe } from "@/services/user";
 import {
   addDays,
   addMonth,
@@ -79,7 +79,7 @@ function weekRangeLabel(start: Date) {
 }
 
 export function CalendarPage() {
-  const { user } = useUser();
+  const { data: user } = useUserMe();
   const [year, setYear] = useState(DEMO_YEAR);
   const [month, setMonth] = useState(DEMO_MONTH);
   const [view, setView] = useState<CalendarViewMode>("month");
@@ -89,7 +89,7 @@ export function CalendarPage() {
 
   const userLabel = user?.id
     ? `User ID: ${user.id.length > 20 ? `${user.id.slice(0, 10)}…` : user.id}`
-    : "User ID: 0";
+    : "Signed in";
 
   const goPrev = useCallback(() => {
     if (view === "week") {

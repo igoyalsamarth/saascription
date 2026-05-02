@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SubsRouteImport } from './routes/subs'
 import { Route as SpendsRouteImport } from './routes/spends'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as OnboardRouteImport } from './routes/onboard'
 import { Route as CalRouteImport } from './routes/cal'
 import { Route as AiRouteImport } from './routes/ai'
@@ -28,6 +29,11 @@ const SubsRoute = SubsRouteImport.update({
 const SpendsRoute = SpendsRouteImport.update({
   id: '/spends',
   path: '/spends',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardRoute = OnboardRouteImport.update({
@@ -78,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/ai': typeof AiRoute
   '/cal': typeof CalRoute
   '/onboard': typeof OnboardRoute
+  '/settings': typeof SettingsRoute
   '/spends': typeof SpendsRoute
   '/subs': typeof SubsRoute
   '/sign-in/$': typeof SignInSplatRoute
@@ -89,6 +96,7 @@ export interface FileRoutesByTo {
   '/ai': typeof AiRoute
   '/cal': typeof CalRoute
   '/onboard': typeof OnboardRoute
+  '/settings': typeof SettingsRoute
   '/spends': typeof SpendsRoute
   '/subs': typeof SubsRoute
   '/sign-in/$': typeof SignInSplatRoute
@@ -102,6 +110,7 @@ export interface FileRoutesById {
   '/ai': typeof AiRoute
   '/cal': typeof CalRoute
   '/onboard': typeof OnboardRoute
+  '/settings': typeof SettingsRoute
   '/spends': typeof SpendsRoute
   '/subs': typeof SubsRoute
   '/sign-in/$': typeof SignInSplatRoute
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/ai'
     | '/cal'
     | '/onboard'
+    | '/settings'
     | '/spends'
     | '/subs'
     | '/sign-in/$'
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/ai'
     | '/cal'
     | '/onboard'
+    | '/settings'
     | '/spends'
     | '/subs'
     | '/sign-in/$'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/ai'
     | '/cal'
     | '/onboard'
+    | '/settings'
     | '/spends'
     | '/subs'
     | '/sign-in/$'
@@ -152,6 +164,7 @@ export interface RootRouteChildren {
   AiRoute: typeof AiRoute
   CalRoute: typeof CalRoute
   OnboardRoute: typeof OnboardRoute
+  SettingsRoute: typeof SettingsRoute
   SpendsRoute: typeof SpendsRoute
   SubsRoute: typeof SubsRoute
 }
@@ -170,6 +183,13 @@ declare module '@tanstack/react-router' {
       path: '/spends'
       fullPath: '/spends'
       preLoaderRoute: typeof SpendsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboard': {
@@ -252,6 +272,7 @@ const rootRouteChildren: RootRouteChildren = {
   AiRoute: AiRoute,
   CalRoute: CalRoute,
   OnboardRoute: OnboardRoute,
+  SettingsRoute: SettingsRoute,
   SpendsRoute: SpendsRoute,
   SubsRoute: SubsRoute,
 }

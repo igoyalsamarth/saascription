@@ -1,4 +1,3 @@
-import { useUser } from "@clerk/clerk-react";
 import {
   AiBrain01Icon,
   Calendar01Icon,
@@ -22,7 +21,7 @@ import {
 } from "@saascription/ui";
 import { Link, useRouterState } from "@tanstack/react-router";
 
-import ClerkHeader from "../providers/clerk-header-user";
+import { SidebarUserMenu } from "./sidebar-user-menu";
 
 type NavItem = {
   title: string;
@@ -41,9 +40,6 @@ const mainNav: NavItem[] = [
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { user } = useUser();
-  const displayName =
-    user?.fullName ?? user?.firstName ?? user?.emailAddresses[0]?.emailAddress;
 
   return (
     <Sidebar className="z-20 min-w-64 w-64 border-r border-sidebar-border">
@@ -67,7 +63,9 @@ export function AppSidebar() {
             <SidebarMenu>
               {mainNav.map((item) => {
                 const isActive =
-                  (item.href === "/" && item.title === "Dashboard" && pathname === "/") ||
+                  (item.href === "/" &&
+                    item.title === "Dashboard" &&
+                    pathname === "/") ||
                   (item.href !== "/" && pathname === item.href);
                 return (
                   <SidebarMenuItem key={item.title}>
@@ -90,19 +88,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border p-2">
-        <div className="flex items-center gap-3 rounded-md p-2 text-left group-data-[collapsible=icon]:justify-center">
-          <ClerkHeader />
-          <div className="min-w-0 flex-1 text-xs group-data-[collapsible=icon]:hidden">
-            <p className="truncate font-medium text-sidebar-foreground">
-              {displayName ?? "Account"}
-            </p>
-            <p className="truncate text-[0.625rem] text-muted-foreground">
-              {user?.id
-                ? `User ID: ${user.id.length > 12 ? `${user.id.slice(0, 8)}…` : user.id}`
-                : "Signed in"}
-            </p>
-          </div>
-        </div>
+        <SidebarUserMenu />
       </SidebarFooter>
     </Sidebar>
   );

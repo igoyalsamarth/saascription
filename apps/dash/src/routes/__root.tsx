@@ -1,8 +1,8 @@
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 
 import AppChrome from "../components/AppChrome";
-import ClerkProvider from "../providers/clerk-provider";
-import QueryProvider from "../providers/query-provider";
+import ClerkProvider from "../providers/clerk";
+import QueryProvider from "../providers/query";
 
 export const Route = createRootRoute({
   component: RootComponent,

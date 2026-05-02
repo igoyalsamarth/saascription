@@ -1,87 +1,38 @@
 import { Button } from "@saascription/ui";
-import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 
-type ThemeMode = "light" | "dark" | "auto";
-
-function getInitialMode(): ThemeMode {
-  if (typeof window === "undefined") {
-    return "auto";
-  }
-
-  const stored = window.localStorage.getItem("theme");
-  if (stored === "light" || stored === "dark" || stored === "auto") {
-    return stored;
-  }
-
-  return "auto";
-}
-
-function applyThemeMode(mode: ThemeMode) {
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const resolved = mode === "auto" ? (prefersDark ? "dark" : "light") : mode;
-
-  document.documentElement.classList.remove("light");
-  if (resolved === "dark") {
-    document.documentElement.classList.add("dark");
-  } else {
-    document.documentElement.classList.remove("dark");
-  }
-
-  if (mode === "auto") {
-    document.documentElement.removeAttribute("data-theme");
-  } else {
-    document.documentElement.setAttribute("data-theme", mode);
-  }
-
-  document.documentElement.style.colorScheme = resolved;
-}
-
+/** Explicit Light / Dark / System — matches next-themes `setTheme` API. */
 export default function ThemeToggle() {
-  const [mode, setMode] = useState<ThemeMode>("auto");
-
-  useEffect(() => {
-    const initialMode = getInitialMode();
-    setMode(initialMode);
-    applyThemeMode(initialMode);
-  }, []);
-
-  useEffect(() => {
-    if (mode !== "auto") {
-      return;
-    }
-
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = () => applyThemeMode("auto");
-
-    media.addEventListener("change", onChange);
-    return () => {
-      media.removeEventListener("change", onChange);
-    };
-  }, [mode]);
-
-  function toggleMode() {
-    const nextMode: ThemeMode =
-      mode === "light" ? "dark" : mode === "dark" ? "auto" : "light";
-    setMode(nextMode);
-    applyThemeMode(nextMode);
-    window.localStorage.setItem("theme", nextMode);
-  }
-
-  const label =
-    mode === "auto"
-      ? "Theme mode: auto (system). Click to switch to light mode."
-      : `Theme mode: ${mode}. Click to switch mode.`;
+  const { theme, setTheme } = useTheme();
+  const active = theme ?? "system";
 
   return (
-    <Button
-      type="button"
-      variant="outline"
-      size="sm"
-      onClick={toggleMode}
-      aria-label={label}
-      title={label}
-    >
-      {mode === "auto" ? "Auto" : mode === "dark" ? "Dark" : "Light"}
-    </Button>
+    <fieldset className="m-0 flex flex-wrap items-center gap-1 border-0 p-0">
+      <legend className="sr-only">Color theme</legend>
+      <Button
+        type="button"
+        variant={active === "light" ? "secondary" : "outline"}
+        size="sm"
+        onClick={() => setTheme("light")}
+      >
+        Light
+      </Button>
+      <Button
+        type="button"
+        variant={active === "dark" ? "secondary" : "outline"}
+        size="sm"
+        onClick={() => setTheme("dark")}
+      >
+        Dark
+      </Button>
+      <Button
+        type="button"
+        variant={active === "system" ? "secondary" : "outline"}
+        size="sm"
+        onClick={() => setTheme("system")}
+      >
+        Auto
+      </Button>
+    </fieldset>
   );
 }

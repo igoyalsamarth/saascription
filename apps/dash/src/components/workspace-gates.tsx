@@ -1,7 +1,7 @@
 import { Navigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
-import { useWorkspaceMe } from "#/lib/workspace-queries";
+import { useWorkspaceMe } from "@/services/workspace";
 
 /** Full app shell: send users without a workspace to onboarding. */
 export function WorkspaceGate({ children }: { children: ReactNode }) {

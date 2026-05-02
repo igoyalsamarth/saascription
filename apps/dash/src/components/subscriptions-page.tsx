@@ -1,4 +1,3 @@
-import { useUser } from "@clerk/clerk-react";
 import {
   Alert01Icon,
   Calendar01Icon,
@@ -34,6 +33,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
+import { useUserMe } from "@/services/user";
 import {
   DASH_SCROLL_CONTENT,
   DASH_STICKY_HEADER,
@@ -205,7 +205,7 @@ function tabLabelContent(tab: (typeof SUBSCRIPTION_TABS)[number]) {
 }
 
 export function SubscriptionsPage() {
-  const { user } = useUser();
+  const { data: user } = useUserMe();
   const [tab, setTab] = useState<SubscriptionTabId>("all");
   const [rangeLabel, setRangeLabel] = useState("Last 30 days");
 
