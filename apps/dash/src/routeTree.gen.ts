@@ -17,9 +17,12 @@ import { Route as CalRouteImport } from './routes/cal'
 import { Route as AiRouteImport } from './routes/ai'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as SignInRouteRouteImport } from './routes/sign-in/route'
+import { Route as ConfigureRouteRouteImport } from './routes/configure/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SignInIndexRouteImport } from './routes/sign-in/index'
+import { Route as ConfigureIndexRouteImport } from './routes/configure/index'
 import { Route as SignInSplatRouteImport } from './routes/sign-in/$'
+import { Route as ConfigureSubscriptionsRouteImport } from './routes/configure/subscriptions'
 
 const SubsRoute = SubsRouteImport.update({
   id: '/subs',
@@ -61,6 +64,11 @@ const SignInRouteRoute = SignInRouteRouteImport.update({
   path: '/sign-in',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConfigureRouteRoute = ConfigureRouteRouteImport.update({
+  id: '/configure',
+  path: '/configure',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -71,14 +79,25 @@ const SignInIndexRoute = SignInIndexRouteImport.update({
   path: '/',
   getParentRoute: () => SignInRouteRoute,
 } as any)
+const ConfigureIndexRoute = ConfigureIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ConfigureRouteRoute,
+} as any)
 const SignInSplatRoute = SignInSplatRouteImport.update({
   id: '/$',
   path: '/$',
   getParentRoute: () => SignInRouteRoute,
 } as any)
+const ConfigureSubscriptionsRoute = ConfigureSubscriptionsRouteImport.update({
+  id: '/subscriptions',
+  path: '/subscriptions',
+  getParentRoute: () => ConfigureRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/configure': typeof ConfigureRouteRouteWithChildren
   '/sign-in': typeof SignInRouteRouteWithChildren
   '/$': typeof SplatRoute
   '/ai': typeof AiRoute
@@ -87,7 +106,9 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/spends': typeof SpendsRoute
   '/subs': typeof SubsRoute
+  '/configure/subscriptions': typeof ConfigureSubscriptionsRoute
   '/sign-in/$': typeof SignInSplatRoute
+  '/configure/': typeof ConfigureIndexRoute
   '/sign-in/': typeof SignInIndexRoute
 }
 export interface FileRoutesByTo {
@@ -99,12 +120,15 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/spends': typeof SpendsRoute
   '/subs': typeof SubsRoute
+  '/configure/subscriptions': typeof ConfigureSubscriptionsRoute
   '/sign-in/$': typeof SignInSplatRoute
+  '/configure': typeof ConfigureIndexRoute
   '/sign-in': typeof SignInIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/configure': typeof ConfigureRouteRouteWithChildren
   '/sign-in': typeof SignInRouteRouteWithChildren
   '/$': typeof SplatRoute
   '/ai': typeof AiRoute
@@ -113,13 +137,16 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/spends': typeof SpendsRoute
   '/subs': typeof SubsRoute
+  '/configure/subscriptions': typeof ConfigureSubscriptionsRoute
   '/sign-in/$': typeof SignInSplatRoute
+  '/configure/': typeof ConfigureIndexRoute
   '/sign-in/': typeof SignInIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/configure'
     | '/sign-in'
     | '/$'
     | '/ai'
@@ -128,7 +155,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/spends'
     | '/subs'
+    | '/configure/subscriptions'
     | '/sign-in/$'
+    | '/configure/'
     | '/sign-in/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -140,11 +169,14 @@ export interface FileRouteTypes {
     | '/settings'
     | '/spends'
     | '/subs'
+    | '/configure/subscriptions'
     | '/sign-in/$'
+    | '/configure'
     | '/sign-in'
   id:
     | '__root__'
     | '/'
+    | '/configure'
     | '/sign-in'
     | '/$'
     | '/ai'
@@ -153,12 +185,15 @@ export interface FileRouteTypes {
     | '/settings'
     | '/spends'
     | '/subs'
+    | '/configure/subscriptions'
     | '/sign-in/$'
+    | '/configure/'
     | '/sign-in/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ConfigureRouteRoute: typeof ConfigureRouteRouteWithChildren
   SignInRouteRoute: typeof SignInRouteRouteWithChildren
   SplatRoute: typeof SplatRoute
   AiRoute: typeof AiRoute
@@ -227,6 +262,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignInRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/configure': {
+      id: '/configure'
+      path: '/configure'
+      fullPath: '/configure'
+      preLoaderRoute: typeof ConfigureRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -241,6 +283,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignInIndexRouteImport
       parentRoute: typeof SignInRouteRoute
     }
+    '/configure/': {
+      id: '/configure/'
+      path: '/'
+      fullPath: '/configure/'
+      preLoaderRoute: typeof ConfigureIndexRouteImport
+      parentRoute: typeof ConfigureRouteRoute
+    }
     '/sign-in/$': {
       id: '/sign-in/$'
       path: '/$'
@@ -248,8 +297,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignInSplatRouteImport
       parentRoute: typeof SignInRouteRoute
     }
+    '/configure/subscriptions': {
+      id: '/configure/subscriptions'
+      path: '/subscriptions'
+      fullPath: '/configure/subscriptions'
+      preLoaderRoute: typeof ConfigureSubscriptionsRouteImport
+      parentRoute: typeof ConfigureRouteRoute
+    }
   }
 }
+
+interface ConfigureRouteRouteChildren {
+  ConfigureSubscriptionsRoute: typeof ConfigureSubscriptionsRoute
+  ConfigureIndexRoute: typeof ConfigureIndexRoute
+}
+
+const ConfigureRouteRouteChildren: ConfigureRouteRouteChildren = {
+  ConfigureSubscriptionsRoute: ConfigureSubscriptionsRoute,
+  ConfigureIndexRoute: ConfigureIndexRoute,
+}
+
+const ConfigureRouteRouteWithChildren = ConfigureRouteRoute._addFileChildren(
+  ConfigureRouteRouteChildren,
+)
 
 interface SignInRouteRouteChildren {
   SignInSplatRoute: typeof SignInSplatRoute
@@ -267,6 +337,7 @@ const SignInRouteRouteWithChildren = SignInRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ConfigureRouteRoute: ConfigureRouteRouteWithChildren,
   SignInRouteRoute: SignInRouteRouteWithChildren,
   SplatRoute: SplatRoute,
   AiRoute: AiRoute,

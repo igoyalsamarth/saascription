@@ -1,4 +1,4 @@
-import { getAuth } from "@clerk/hono";
+import { getAuth } from "@hono/clerk-auth";
 import { Hono } from "hono";
 
 import { getUserById } from "../../controllers/users";

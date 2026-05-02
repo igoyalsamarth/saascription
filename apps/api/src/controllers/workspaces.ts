@@ -73,7 +73,18 @@ export async function createWorkspaceForOwner(
     throw err;
   }
 
+  const userEmail = await db
+    .prepare(`SELECT email FROM users WHERE id = ?`)
+    .bind(ownerUserId)
+    .first<{ email: string }>();
+  if (!userEmail?.email) {
+    const err = new Error("user_email_required");
+    (err as Error & { status: number }).status = 422;
+    throw err;
+  }
+
   const workspaceId = crypto.randomUUID();
+  const primaryEmailId = crypto.randomUUID();
 
   await db.batch([
     db
@@ -87,6 +98,12 @@ export async function createWorkspaceForOwner(
         `UPDATE users SET name = ?, updated_at = datetime('now') WHERE id = ?`,
       )
       .bind(displayName, ownerUserId),
+    db
+      .prepare(
+        `INSERT INTO workspace_emails (id, workspace_id, email, is_primary, created_at)
+         VALUES (?, ?, ?, 1, datetime('now'))`,
+      )
+      .bind(primaryEmailId, workspaceId, userEmail.email),
   ]);
 
   return { id: workspaceId, name };

@@ -1,12 +1,15 @@
-import { getAuth } from "@clerk/hono";
+import { getAuth } from "@hono/clerk-auth";
 import { Hono } from "hono";
 import {
   createWorkspaceForOwner,
   ensureUserFromClerkApi,
   getWorkspaceForOwner,
 } from "../../controllers/workspaces";
+import { subscriptionsRouter } from "./subscriptions";
 
 const workspacesRouter = new Hono<{ Bindings: CloudflareBindings }>();
+
+workspacesRouter.route("/me/subscriptions", subscriptionsRouter);
 
 workspacesRouter.get("/me", async (c) => {
   const { userId } = getAuth(c);
@@ -77,6 +80,15 @@ workspacesRouter.post("/", async (c) => {
     return c.json({ ok: true, workspace: { id: ws.id, name: ws.name } });
   } catch (e) {
     const status = (e as Error & { status?: number }).status;
+    if (status === 422) {
+      return c.json(
+        {
+          error:
+            "Your account needs an email before a workspace can be created.",
+        },
+        422,
+      );
+    }
     if (status === 409) {
       return c.json({ error: "Workspace already exists" }, 409);
     }

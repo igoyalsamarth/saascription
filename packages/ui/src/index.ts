@@ -15,6 +15,7 @@ export {
   CardHeader,
   CardTitle,
 } from "./components/card";
+export { Calendar, CalendarDayButton } from "./components/calendar";
 export {
   type ChartConfig,
   ChartContainer,
@@ -46,6 +47,14 @@ export {
 } from "./components/field";
 export { Input } from "./components/input";
 export { Label } from "./components/label";
+export {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "./components/popover";
 export { Separator } from "./components/separator";
 export {
   Sidebar,

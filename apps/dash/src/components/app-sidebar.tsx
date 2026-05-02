@@ -3,6 +3,7 @@ import {
   Calendar01Icon,
   Cards01Icon,
   CoinsDollarIcon,
+  Configuration01Icon,
   Home01Icon,
   SparklesIcon,
 } from "@hugeicons/core-free-icons";
@@ -87,6 +88,23 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+        <SidebarMenu className="shrink-0 p-2">
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              className="w-full"
+              isActive={
+                pathname === "/configure" || pathname.startsWith("/configure/")
+              }
+              render={<Link to="/configure" />}
+            >
+              <HugeiconsIcon
+                icon={Configuration01Icon}
+                className="size-4 shrink-0"
+              />
+              <span>Configure</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       <SidebarFooter className="border-t border-sidebar-border p-2">
         <SidebarUserMenu />
       </SidebarFooter>
