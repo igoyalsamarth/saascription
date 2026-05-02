@@ -4,9 +4,7 @@
 #   CLOUDFLARE_API_TOKEN   — API token with Workers Scripts:Edit, D1, Queues as needed
 #   CLOUDFLARE_ACCOUNT_ID  — Workers dashboard → account id
 #   CLERK_WEBHOOK_SIGNING_SECRET — required by wrangler.jsonc secrets.required (Clerk whsec_…)
-#
-# Disable or disconnect Cloudflare Workers Builds for this Worker if it still triggers on push
-# to avoid double deploys.
+
 
 name: Deploy API
 

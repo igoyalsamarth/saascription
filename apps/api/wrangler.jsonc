@@ -4,7 +4,11 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-05-01",
   "secrets": {
-    "required": ["CLERK_WEBHOOK_SIGNING_SECRET"]
+    "required": [
+      "CLERK_WEBHOOK_SIGNING_SECRET",
+      "CLERK_SECRET_KEY",
+      "CLERK_PUBLISHABLE_KEY"
+    ]
   },
   "d1_databases": [
     {
