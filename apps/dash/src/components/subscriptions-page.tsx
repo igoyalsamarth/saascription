@@ -33,19 +33,20 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
+import {
+  apiSubscriptionToTableRow,
+  filterSubscriptions,
+  SUBSCRIPTION_TABS,
+  type SubscriptionTabId,
+  type SubscriptionTableRow,
+} from "@/lib/subscriptions-table";
+import { useWorkspaceSubscriptionsQuery } from "@/services/subscriptions";
 import { useUserMe } from "@/services/user";
 import {
   DASH_SCROLL_CONTENT,
   DASH_STICKY_HEADER,
   DASH_STICKY_HEADER_PAD,
 } from "../lib/dashboard-page-layout";
-import {
-  filterSubscriptions,
-  MOCK_SUBSCRIPTIONS,
-  SUBSCRIPTION_TABS,
-  type SubscriptionRow,
-  type SubscriptionTabId,
-} from "../lib/subscriptions-mock";
 
 const pageSize = 6;
 
@@ -54,7 +55,7 @@ const tabTriggerClass =
   "group-data-[variant=line]/tabs-list:after:!bg-primary " +
   "group-data-[variant=line]/tabs-list:data-active:after:!bg-primary";
 
-function useSubscriptionColumns(): ColumnDef<SubscriptionRow, unknown>[] {
+function useSubscriptionColumns(): ColumnDef<SubscriptionTableRow, unknown>[] {
   return useMemo(
     () => [
       {
@@ -206,6 +207,12 @@ function tabLabelContent(tab: (typeof SUBSCRIPTION_TABS)[number]) {
 
 export function SubscriptionsPage() {
   const { data: user } = useUserMe();
+  const {
+    data: subscriptionsPayload,
+    isPending,
+    isError,
+    error,
+  } = useWorkspaceSubscriptionsQuery();
   const [tab, setTab] = useState<SubscriptionTabId>("all");
   const [rangeLabel, setRangeLabel] = useState("Last 30 days");
 
@@ -213,9 +220,14 @@ export function SubscriptionsPage() {
     ? `User ID: ${user.id.length > 20 ? `${user.id.slice(0, 10)}…` : user.id}`
     : "Signed in";
 
+  const tableRows = useMemo(() => {
+    const raw = subscriptionsPayload?.subscriptions ?? [];
+    return raw.map(apiSubscriptionToTableRow);
+  }, [subscriptionsPayload?.subscriptions]);
+
   const data = useMemo(
-    () => filterSubscriptions(MOCK_SUBSCRIPTIONS, tab),
-    [tab],
+    () => filterSubscriptions(tableRows, tab),
+    [tableRows, tab],
   );
 
   const columns = useSubscriptionColumns();
@@ -232,6 +244,28 @@ export function SubscriptionsPage() {
   const total = data.length;
   const from = total === 0 ? 0 : pageIndex * ps + 1;
   const to = Math.min((pageIndex + 1) * ps, total);
+
+  if (isPending) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center bg-muted/30 px-4">
+        <p className="text-sm text-muted-foreground">Loading subscriptions…</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    const message =
+      error instanceof Error ? error.message : "Could not load subscriptions.";
+    return (
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 bg-muted/30 px-4">
+        <p className="text-sm text-destructive">{message}</p>
+        <p className="text-center text-xs text-muted-foreground">
+          Try refreshing. If this persists, check that the API is running and
+          VITE_API_URL is correct.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-muted/30">

@@ -4,9 +4,11 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-
-import type { SubscriptionRow } from "@/lib/subscriptions";
 import { useClient } from "@/lib/client";
+import type { SubscriptionRow } from "@/lib/subscriptions";
+import { calendarKeys } from "@/services/calendar";
+import { dashboardKeys } from "@/services/dashboard";
+import { spendsKeys } from "@/services/spends";
 
 export const subscriptionKeys = {
   all: ["workspace-subscriptions"] as const,
@@ -85,6 +87,13 @@ export function useCreateSubscriptionMutation(
           subscriptions: [...(old?.subscriptions ?? []), data.subscription],
         }),
       );
+      await queryClient.invalidateQueries({
+        queryKey: dashboardKeys.overview(),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: calendarKeys.renewals(),
+      });
+      await queryClient.invalidateQueries({ queryKey: spendsKeys.all });
       await options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
@@ -121,6 +130,13 @@ export function useUpdateSubscriptionMutation(
           ),
         }),
       );
+      await queryClient.invalidateQueries({
+        queryKey: dashboardKeys.overview(),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: calendarKeys.renewals(),
+      });
+      await queryClient.invalidateQueries({ queryKey: spendsKeys.all });
       await options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
@@ -148,6 +164,13 @@ export function useDeleteSubscriptionMutation(
           subscriptions: (old?.subscriptions ?? []).filter((s) => s.id !== id),
         }),
       );
+      await queryClient.invalidateQueries({
+        queryKey: dashboardKeys.overview(),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: calendarKeys.renewals(),
+      });
+      await queryClient.invalidateQueries({ queryKey: spendsKeys.all });
       await options?.onSuccess?.(data, id, onMutateResult, context);
     },
   });
@@ -160,12 +183,7 @@ export type CancelSubscriptionResponse = {
 
 export function useCancelSubscriptionMutation(
   options?: Omit<
-    UseMutationOptions<
-      CancelSubscriptionResponse,
-      Error,
-      string,
-      unknown
-    >,
+    UseMutationOptions<CancelSubscriptionResponse, Error, string, unknown>,
     "mutationFn"
   >,
 ) {
@@ -187,6 +205,13 @@ export function useCancelSubscriptionMutation(
           ),
         }),
       );
+      await queryClient.invalidateQueries({
+        queryKey: dashboardKeys.overview(),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: calendarKeys.renewals(),
+      });
+      await queryClient.invalidateQueries({ queryKey: spendsKeys.all });
       await options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });

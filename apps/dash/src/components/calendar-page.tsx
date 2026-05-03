@@ -25,29 +25,26 @@ import {
   SidebarTrigger,
 } from "@saascription/ui";
 import { useCallback, useMemo, useState } from "react";
-import { useUserMe } from "@/services/user";
+import { renewalsToCalendarEvents } from "@/lib/calendar-render";
 import {
   addDays,
   addMonth,
-  CALENDAR_DEMO_EVENTS,
-  DEMO_TODAY,
+  CALENDAR_SAVINGS_TIP,
   eventsForDate,
   getMonthGrid,
-  isDemoToday,
+  isSameLocalDay,
   listEventsInMonth,
   listEventsInWeek,
-  SAVINGS_TIP,
   startOfWeekSunday,
-} from "../lib/calendar-mock";
+} from "@/lib/calendar-utils";
+import { useCalendarRenewals } from "@/services/calendar";
+import { useUserMe } from "@/services/user";
 import type { CalendarViewMode } from "../lib/calendar-types";
 import {
   DASH_SCROLL_CONTENT,
   DASH_STICKY_HEADER,
   DASH_STICKY_HEADER_PAD,
 } from "../lib/dashboard-page-layout";
-
-const DEMO_YEAR = 2023;
-const DEMO_MONTH = 9;
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
@@ -80,12 +77,31 @@ function weekRangeLabel(start: Date) {
 
 export function CalendarPage() {
   const { data: user } = useUserMe();
-  const [year, setYear] = useState(DEMO_YEAR);
-  const [month, setMonth] = useState(DEMO_MONTH);
+  const {
+    data: renewals,
+    isPending: calendarPending,
+    isError: calendarError,
+    error: calendarErr,
+  } = useCalendarRenewals();
+
+  const events = useMemo(
+    () => renewalsToCalendarEvents(renewals ?? []),
+    [renewals],
+  );
+
+  const initialMonth = useMemo(() => {
+    const n = new Date();
+    return { y: n.getFullYear(), m: n.getMonth() };
+  }, []);
+
+  const [year, setYear] = useState(initialMonth.y);
+  const [month, setMonth] = useState(initialMonth.m);
   const [view, setView] = useState<CalendarViewMode>("month");
   const [weekStart, setWeekStart] = useState(() =>
-    startOfWeekSunday(new Date(DEMO_YEAR, DEMO_MONTH, 1)),
+    startOfWeekSunday(new Date()),
   );
+
+  const realToday = new Date();
 
   const userLabel = user?.id
     ? `User ID: ${user.id.length > 20 ? `${user.id.slice(0, 10)}…` : user.id}`
@@ -129,45 +145,42 @@ export function CalendarPage() {
 
   const monthGrid = useMemo(() => getMonthGrid(year, month), [year, month]);
 
-  const listRows = useMemo(() => listEventsInMonth(year, month), [year, month]);
-
-  const railWeekStart = useMemo(() => {
-    if (year === DEMO_YEAR && month === DEMO_MONTH) {
-      return startOfWeekSunday(DEMO_TODAY);
-    }
-    return startOfWeekSunday(new Date(year, month, 1));
-  }, [year, month]);
-
-  const weekRailEvents = useMemo(
-    () => listEventsInWeek(railWeekStart),
-    [railWeekStart],
+  const listRows = useMemo(
+    () => listEventsInMonth(events, year, month),
+    [events, year, month],
   );
 
+  const weekRailEvents = useMemo(() => {
+    const ws = startOfWeekSunday(new Date());
+    return listEventsInWeek(events, ws);
+  }, [events]);
+
   const dayTotal = (y: number, m: number, d: number) => {
-    const ev = eventsForDate(y, m, d);
+    const ev = eventsForDate(events, y, m, d);
     let sum = 0;
     for (const e of ev) {
-      const n = Number.parseFloat(e.amount.replace(/[^0-9.]/g, ""));
-      if (!Number.isNaN(n)) sum += n;
+      const v =
+        e.amountUsd ?? Number.parseFloat(e.amount.replace(/[^0-9.-]/g, ""));
+      if (!Number.isNaN(v)) {
+        sum += v;
+      }
     }
     return sum;
   };
 
-  const todayAws = useMemo(
-    () =>
-      CALENDAR_DEMO_EVENTS.find(
-        (e) =>
-          e.year === DEMO_TODAY.getFullYear() &&
-          e.month === DEMO_TODAY.getMonth() &&
-          e.day === DEMO_TODAY.getDate() &&
-          e.id === "e3",
-      ),
-    [],
+  const todayEvents = eventsForDate(
+    events,
+    realToday.getFullYear(),
+    realToday.getMonth(),
+    realToday.getDate(),
   );
+  const todayHighlightEvent =
+    todayEvents.find((e) => e.manualReview || e.expiringSubtext) ??
+    todayEvents[0];
   const todayTotal = dayTotal(
-    DEMO_TODAY.getFullYear(),
-    DEMO_TODAY.getMonth(),
-    DEMO_TODAY.getDate(),
+    realToday.getFullYear(),
+    realToday.getMonth(),
+    realToday.getDate(),
   );
 
   const weekRowDays = useMemo(() => {
@@ -177,6 +190,30 @@ export function CalendarPage() {
     }
     return d;
   }, [weekStart]);
+
+  if (calendarPending) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center bg-muted/30 px-4">
+        <p className="text-sm text-muted-foreground">Loading calendar…</p>
+      </div>
+    );
+  }
+
+  if (calendarError) {
+    const message =
+      calendarErr instanceof Error
+        ? calendarErr.message
+        : "Could not load calendar.";
+    return (
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 bg-muted/30 px-4">
+        <p className="text-sm text-destructive">{message}</p>
+        <p className="text-center text-xs text-muted-foreground">
+          Try refreshing. If this persists, check that the API is running and
+          VITE_API_URL is correct.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
@@ -293,8 +330,8 @@ export function CalendarPage() {
                     </div>
                   ))}
                   {monthGrid.map((cell, i) => {
-                    const evs = eventsForDate(cell.y, cell.m, cell.d);
-                    const isToday = isDemoToday(cell);
+                    const evs = eventsForDate(events, cell.y, cell.m, cell.d);
+                    const isToday = isSameLocalDay(cell, realToday);
                     return (
                       <div
                         key={`${cell.y}-${cell.m}-${cell.d}`}
@@ -367,8 +404,8 @@ export function CalendarPage() {
                     const y = d.getFullYear();
                     const m = d.getMonth();
                     const day = d.getDate();
-                    const evs = eventsForDate(y, m, day);
-                    const isToday = isDemoToday({ y, m, d: day });
+                    const evs = eventsForDate(events, y, m, day);
+                    const isToday = isSameLocalDay({ y, m, d: day }, realToday);
                     return (
                       <div key={+d} className="min-h-[180px] p-1.5 sm:p-2">
                         <div className="border-b border-border/50 pb-2 text-center">
@@ -514,11 +551,11 @@ export function CalendarPage() {
                 </DropdownMenu>
               </CardHeader>
               <CardContent className="space-y-3">
-                {year === DEMO_YEAR && month === DEMO_MONTH && todayAws ? (
+                {todayHighlightEvent ? (
                   <div className="flex gap-3">
                     <div className="flex flex-col items-center">
                       <span className="flex size-6 items-center justify-center rounded-full border-2 border-primary/40 bg-primary/10 text-[0.625rem] font-semibold text-foreground">
-                        {DEMO_TODAY.getDate()}
+                        {realToday.getDate()}
                       </span>
                       <span
                         className="mt-0.5 w-px flex-1 min-h-[2rem] bg-border"
@@ -529,7 +566,7 @@ export function CalendarPage() {
                       <div>
                         <p className="text-xs font-medium text-foreground">
                           Today,{" "}
-                          {DEMO_TODAY.toLocaleDateString("en-US", {
+                          {realToday.toLocaleDateString("en-US", {
                             month: "short",
                             day: "numeric",
                           })}
@@ -548,26 +585,30 @@ export function CalendarPage() {
                       </div>
                       <div
                         className={cn(
-                          "space-y-2 rounded-lg border border-amber-200/80 bg-amber-50/90 p-3 dark:border-amber-900/50 dark:bg-amber-950/40",
+                          "space-y-2 rounded-lg border border-border/80 p-3",
+                          todayHighlightEvent.cardBg,
                         )}
                       >
                         <div className="flex items-center gap-2">
                           <span className="flex size-8 items-center justify-center rounded-full bg-background/80">
                             <HugeiconsIcon
-                              icon={todayAws.icon}
-                              className={cn("size-4", todayAws.iconClass)}
+                              icon={todayHighlightEvent.icon}
+                              className={cn(
+                                "size-4",
+                                todayHighlightEvent.iconClass,
+                              )}
                             />
                           </span>
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold text-foreground">
-                              {todayAws.name}
+                              {todayHighlightEvent.name}
                             </p>
                             <p className="text-xs font-medium tabular-nums text-foreground">
-                              {todayAws.amount}
+                              {todayHighlightEvent.amount}
                             </p>
                           </div>
                         </div>
-                        {todayAws.manualReview ? (
+                        {todayHighlightEvent.manualReview ? (
                           <p className="inline-flex items-center gap-1 text-[0.625rem] font-medium text-amber-800 dark:text-amber-400">
                             <HugeiconsIcon
                               icon={Alert01Icon}
@@ -599,7 +640,7 @@ export function CalendarPage() {
                   </ul>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    No renewals in this week for the demo.
+                    No renewals this week.
                   </p>
                 )}
               </CardContent>
@@ -630,7 +671,7 @@ export function CalendarPage() {
                   Savings tip
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-                  {SAVINGS_TIP}
+                  {CALENDAR_SAVINGS_TIP}
                 </p>
               </CardContent>
             </Card>

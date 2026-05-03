@@ -39,6 +39,7 @@ import {
   PieChart,
   XAxis,
 } from "recharts";
+import { useDashboardOverview } from "@/services/dashboard";
 import { useUserMe } from "@/services/user";
 
 import {
@@ -47,31 +48,11 @@ import {
   DASH_STICKY_HEADER_PAD,
 } from "../lib/dashboard-page-layout";
 
-const spendData = [
-  { month: "May", spend: 1820 },
-  { month: "Jun", spend: 2140 },
-  { month: "Jul", spend: 1980 },
-  { month: "Aug", spend: 2450 },
-  { month: "Sep", spend: 2210 },
-  { month: "Oct", spend: 2645 },
-];
-
-const sparklineData = [
-  { i: 0, v: 2.1 },
-  { i: 1, v: 2.3 },
-  { i: 2, v: 2.5 },
-  { i: 3, v: 2.45 },
-  { i: 4, v: 2.85 },
-  { i: 5, v: 2.84 },
-];
-
-const categoryData = [
-  { name: "Software", value: 35, key: "software" as const },
-  { name: "Cloud", value: 28, key: "cloud" as const },
-  { name: "Design", value: 18, key: "design" as const },
-  { name: "Productivity", value: 12, key: "productivity" as const },
-  { name: "Other", value: 7, key: "other" as const },
-];
+const usdWhole = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0,
+});
 
 const chartKeys = {
   software: { label: "Software", color: "var(--color-chart-1)" },
@@ -89,20 +70,46 @@ const sparkConfig: ChartConfig = {
   v: { label: "Trend", color: "var(--color-chart-1)" },
 };
 
-const renewals = [
-  { name: "AWS", amount: 420, inDays: 2 },
-  { name: "Adobe CC", amount: 79, inDays: 5 },
-  { name: "Figma", amount: 45, inDays: 9 },
-];
-
 export function DashboardOverview() {
   const { data: user } = useUserMe();
+  const {
+    data: dashboard,
+    isPending: dashboardPending,
+    isError: dashboardError,
+    error: dashboardErr,
+  } = useDashboardOverview();
   const [spendWindow, setSpendWindow] = useState<"6m" | "1y">("6m");
   const [rangeLabel, setRangeLabel] = useState("Last 30 days");
 
   const userLabel = user?.id
     ? `User ID: ${user.id.length > 20 ? `${user.id.slice(0, 10)}…` : user.id}`
     : "Signed in";
+
+  if (dashboardPending) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center bg-muted/30 px-4">
+        <p className="text-sm text-muted-foreground">Loading dashboard…</p>
+      </div>
+    );
+  }
+
+  if (dashboardError || !dashboard) {
+    const message =
+      dashboardErr instanceof Error
+        ? dashboardErr.message
+        : "Could not load dashboard.";
+    return (
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 bg-muted/30 px-4">
+        <p className="text-sm text-destructive">{message}</p>
+        <p className="text-center text-xs text-muted-foreground">
+          Try refreshing. If this persists, check that the API is running and
+          VITE_API_URL is correct.
+        </p>
+      </div>
+    );
+  }
+
+  const categoryData = dashboard.categoryBreakdown;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
@@ -194,11 +201,20 @@ export function DashboardOverview() {
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-semibold tabular-nums text-foreground sm:text-3xl">
-                14
+                {dashboard.activeSubscriptionsCount}
               </p>
-              <Badge variant="secondary" className="mt-2 w-fit text-[0.625rem]">
-                +2 since last month
-              </Badge>
+              {dashboard.activeSubscriptionsDeltaSinceLastMonth > 0 ? (
+                <Badge
+                  variant="secondary"
+                  className="mt-2 w-fit text-[0.625rem]"
+                >
+                  {`+${dashboard.activeSubscriptionsDeltaSinceLastMonth} in the last 30 days`}
+                </Badge>
+              ) : (
+                <p className="mt-2 text-[0.625rem] text-muted-foreground">
+                  No new subscriptions in the last 30 days
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -214,7 +230,7 @@ export function DashboardOverview() {
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-semibold tabular-nums text-foreground sm:text-3xl">
-                $2,845
+                {usdWhole.format(dashboard.totalMonthlySpend)}
               </p>
               <div className="mt-2 h-8 w-full">
                 <ChartContainer
@@ -223,7 +239,7 @@ export function DashboardOverview() {
                   initialDimension={{ width: 200, height: 32 }}
                 >
                   <AreaChart
-                    data={sparklineData}
+                    data={dashboard.monthlySpendSparkline}
                     margin={{ top: 2, right: 0, left: 0, bottom: 0 }}
                   >
                     <Area
@@ -257,7 +273,7 @@ export function DashboardOverview() {
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-semibold tabular-nums text-primary-foreground sm:text-3xl">
-                $4,120
+                {usdWhole.format(dashboard.lifetimeSavings)}
               </p>
             </CardContent>
           </Card>
@@ -299,7 +315,7 @@ export function DashboardOverview() {
                 initialDimension={{ width: 600, height: 240 }}
               >
                 <AreaChart
-                  data={spendData}
+                  data={dashboard.spendByMonth}
                   margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
                 >
                   <CartesianGrid
@@ -335,29 +351,40 @@ export function DashboardOverview() {
               <CardDescription>Upcoming subscription charges</CardDescription>
             </CardHeader>
             <CardContent className="space-y-0">
-              {renewals.map((r) => (
-                <div
-                  key={r.name}
-                  className="flex items-center justify-between gap-2 border-b border-border/60 py-3 last:border-b-0"
-                >
-                  <div className="flex min-w-0 items-center gap-2">
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                      <HugeiconsIcon icon={SparklesIcon} className="size-3.5" />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-medium text-foreground">
-                        {r.name}
-                      </p>
-                      <p className="text-[0.625rem] text-muted-foreground">
-                        In {r.inDays} day{r.inDays === 1 ? "" : "s"}
-                      </p>
+              {dashboard.upcomingRenewals.length === 0 ? (
+                <p className="py-6 text-center text-sm text-muted-foreground">
+                  No upcoming renewals with a next billing date.
+                </p>
+              ) : (
+                dashboard.upcomingRenewals.map((r) => (
+                  <div
+                    key={r.id}
+                    className="flex items-center justify-between gap-2 border-b border-border/60 py-3 last:border-b-0"
+                  >
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                        <HugeiconsIcon
+                          icon={SparklesIcon}
+                          className="size-3.5"
+                        />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-medium text-foreground">
+                          {r.name}
+                        </p>
+                        <p className="text-[0.625rem] text-muted-foreground">
+                          {r.inDays === 0
+                            ? "Renews today"
+                            : `In ${r.inDays} day${r.inDays === 1 ? "" : "s"}`}
+                        </p>
+                      </div>
                     </div>
+                    <span className="shrink-0 text-xs font-medium tabular-nums text-foreground">
+                      {usdWhole.format(r.amount)}
+                    </span>
                   </div>
-                  <span className="shrink-0 text-xs font-medium tabular-nums text-foreground">
-                    ${r.amount}
-                  </span>
-                </div>
-              ))}
+                ))
+              )}
             </CardContent>
             <CardFooter className="pt-0">
               <Link
@@ -377,59 +404,73 @@ export function DashboardOverview() {
           <Card>
             <CardHeader>
               <CardTitle>Spend by category</CardTitle>
-              <CardDescription>Share of this month’s total</CardDescription>
+              <CardDescription>
+                Share of estimated monthly spend (from vendor names)
+              </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-              <ChartContainer
-                config={chartKeys}
-                className="mx-auto min-h-[200px] w-[200px] sm:mx-0"
-                initialDimension={{ width: 200, height: 200 }}
-              >
-                <PieChart>
-                  <ChartTooltip
-                    content={<ChartTooltipContent nameKey="name" hideLabel />}
-                  />
-                  <Pie
-                    data={categoryData}
-                    nameKey="name"
-                    dataKey="value"
-                    innerRadius={52}
-                    outerRadius={80}
-                    strokeWidth={0}
-                    paddingAngle={1}
+              {categoryData.length === 0 ? (
+                <p className="w-full py-8 text-center text-sm text-muted-foreground">
+                  Add active subscriptions to see a category breakdown.
+                </p>
+              ) : (
+                <>
+                  <ChartContainer
+                    config={chartKeys}
+                    className="mx-auto min-h-[200px] w-[200px] sm:mx-0"
+                    initialDimension={{ width: 200, height: 200 }}
                   >
-                    {categoryData.map((entry) => (
-                      <Cell
-                        key={entry.name}
-                        fill={`var(--color-${entry.key})`}
-                        className="stroke-transparent"
+                    <PieChart>
+                      <ChartTooltip
+                        content={
+                          <ChartTooltipContent nameKey="name" hideLabel />
+                        }
                       />
+                      <Pie
+                        data={categoryData}
+                        nameKey="name"
+                        dataKey="value"
+                        innerRadius={52}
+                        outerRadius={80}
+                        strokeWidth={0}
+                        paddingAngle={1}
+                      >
+                        {categoryData.map((entry) => (
+                          <Cell
+                            key={entry.name}
+                            fill={`var(--color-${entry.key})`}
+                            className="stroke-transparent"
+                          />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ChartContainer>
+                  <ul className="w-full min-w-0 space-y-2 text-xs sm:max-w-48">
+                    {categoryData.map((c) => (
+                      <li
+                        key={c.name}
+                        className="flex items-center justify-between gap-2"
+                      >
+                        <span className="flex items-center gap-2 min-w-0">
+                          <span
+                            className="size-2 shrink-0 rounded-sm"
+                            style={{
+                              backgroundColor: `var(--color-${c.key}, var(--color-chart-1))`,
+                            }}
+                            aria-hidden
+                          />
+                          <span className="truncate text-foreground">
+                            {c.name}
+                          </span>
+                        </span>
+                        <span className="shrink-0 text-muted-foreground">
+                          {c.value}%
+                        </span>
+                      </li>
                     ))}
-                  </Pie>
-                </PieChart>
-              </ChartContainer>
-              <ul className="w-full min-w-0 space-y-2 text-xs sm:max-w-48">
-                {categoryData.map((c) => (
-                  <li
-                    key={c.name}
-                    className="flex items-center justify-between gap-2"
-                  >
-                    <span className="flex items-center gap-2 min-w-0">
-                      <span
-                        className="size-2 shrink-0 rounded-sm"
-                        style={{
-                          backgroundColor: `var(--color-${c.key}, var(--color-chart-1))`,
-                        }}
-                        aria-hidden
-                      />
-                      <span className="truncate text-foreground">{c.name}</span>
-                    </span>
-                    <span className="shrink-0 text-muted-foreground">
-                      {c.value}%
-                    </span>
-                  </li>
-                ))}
-              </ul>
+                  </ul>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -450,22 +491,28 @@ export function DashboardOverview() {
               </Link>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-3 rounded-md border border-border/80 bg-muted/20 p-3">
-                <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                  <HugeiconsIcon
-                    icon={Notification01Icon}
-                    className="size-3.5"
-                  />
+              {dashboard.recentActivity ? (
+                <div className="flex gap-3 rounded-md border border-border/80 bg-muted/20 p-3">
+                  <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    <HugeiconsIcon
+                      icon={Notification01Icon}
+                      className="size-3.5"
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-foreground">
+                      {dashboard.recentActivity.title}
+                    </p>
+                    <p className="text-[0.625rem] text-muted-foreground">
+                      {dashboard.recentActivity.subtitle}
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-foreground">
-                    New subscription added
-                  </p>
-                  <p className="text-[0.625rem] text-muted-foreground">
-                    Netflix Standard Plan — 2h ago
-                  </p>
-                </div>
-              </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No subscription activity yet.
+                </p>
+              )}
             </CardContent>
           </Card>
         </section>

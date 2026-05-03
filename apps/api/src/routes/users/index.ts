@@ -1,6 +1,12 @@
 import { getAuth } from "@hono/clerk-auth";
 import { Hono } from "hono";
 
+import { buildCalendarPayload } from "../../controllers/calendar";
+import { buildDashboardOverview } from "../../controllers/dashboard";
+import {
+  buildSpendsAnalytics,
+  parseSpendsMonthsQuery,
+} from "../../controllers/spends";
 import { getUserById } from "../../controllers/users";
 import { ensureUserFromClerkApi } from "../../controllers/workspaces";
 
@@ -46,6 +52,37 @@ usersRouter.get("/me", async (c) => {
       imageUrl: row.image_url,
     },
   });
+});
+
+usersRouter.get("/me/dashboard", async (c) => {
+  const { userId } = getAuth(c);
+  if (!userId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const dashboard = await buildDashboardOverview(c.env.DB, userId);
+  return c.json({ dashboard });
+});
+
+usersRouter.get("/me/calendar", async (c) => {
+  const { userId } = getAuth(c);
+  if (!userId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const calendar = await buildCalendarPayload(c.env.DB, userId);
+  return c.json({ calendar });
+});
+
+usersRouter.get("/me/spends", async (c) => {
+  const { userId } = getAuth(c);
+  if (!userId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const months = parseSpendsMonthsQuery(c.req.query("months"));
+  const spends = await buildSpendsAnalytics(c.env.DB, userId, months);
+  return c.json({ spends });
 });
 
 export { usersRouter };
