@@ -55,12 +55,16 @@ CREATE INDEX IF NOT EXISTS idx_workspace_emails_workspace
 
 -- ---------------------------------------------------------------------------
 -- SaaS catalog (subscriptions reference saas.id)
+--
+-- categories: JSON array of string slugs, e.g. ["engineering","collab"].
+-- At most 3 elements; enforce in application code when writing.
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS saas (
   id TEXT PRIMARY KEY NOT NULL,
   name TEXT NOT NULL,
   website_url TEXT,
   icon_url TEXT,
+  categories TEXT NOT NULL DEFAULT '[]',
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -114,3 +118,36 @@ CREATE INDEX IF NOT EXISTS idx_subscriptions_failed_at
 
 CREATE INDEX IF NOT EXISTS idx_subscriptions_subscribed_at
   ON subscriptions (subscribed_at);
+
+-- ---------------------------------------------------------------------------
+-- Completed payments (ledger / source of truth for actual spend)
+--
+-- subscriptions.cost is the *current* recurring amount — it does not replace
+-- a payment history (price changes, trials ending, proration, refunds).
+--
+-- amount: signed integer in smallest currency unit (e.g. cents); use
+-- negative values for refunds/chargebacks so monthly totals stay correct.
+--
+-- external_ref: optional idempotency key from bank/email/provider sync
+-- (UNIQUE when set; multiple NULLs allowed per SQLite rules).
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS subscription_payment_events (
+  id TEXT PRIMARY KEY NOT NULL,
+  subscription_id TEXT,
+  amount INTEGER NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'USD',
+  paid_at TEXT NOT NULL,
+  external_ref TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (subscription_id) REFERENCES subscriptions(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_payment_events_subscription
+  ON subscription_payment_events (subscription_id);
+
+CREATE INDEX IF NOT EXISTS idx_payment_events_paid_at
+  ON subscription_payment_events (paid_at);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_payment_events_external_ref
+  ON subscription_payment_events (external_ref)
+  WHERE external_ref IS NOT NULL;
