@@ -3,6 +3,12 @@
   "name": "api",
   "main": "src/index.ts",
   "compatibility_date": "2026-05-01",
+  "routes": [
+    {
+      "pattern": "api.saascription.app",
+      "custom_domain": true
+    }
+  ],
   "secrets": {
     "required": [
       "CLERK_WEBHOOK_SIGNING_SECRET",
