@@ -29,6 +29,7 @@
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
+    "wrangler": "^4.70.0",
     "@biomejs/biome": "2.4.5",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
