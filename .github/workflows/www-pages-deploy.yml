@@ -4,8 +4,7 @@
 #   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
 #   NEXT_PUBLIC_SITE_URL — canonical site URL, e.g. https://www.example.com (no trailing slash)
 #
-# Actions variables:
-#   CLOUDFLARE_PAGES_PROJECT_WWW — Cloudflare Pages project name for the marketing site
+# Pages project name and output dir are defined in apps/www/wrangler.jsonc (`name`, `pages_build_output_dir`).
 
 name: Deploy WWW (Cloudflare Pages)
 
@@ -51,4 +50,4 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/www
           packageManager: bun
-          command: pages deploy out --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT_WWW }}
+          command: pages deploy

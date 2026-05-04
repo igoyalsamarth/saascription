@@ -5,8 +5,7 @@
 #   CLERK_PUBLISHABLE_KEY — same pk_… key as the API worker (used as VITE_CLERK_PUBLISHABLE_KEY at build time)
 #   VITE_API_URL — production API base, e.g. https://api.example.com/api/v1
 #
-# Actions variables (Settings → Secrets and variables → Actions → Variables):
-#   CLOUDFLARE_PAGES_PROJECT_DASH — Cloudflare Pages project name for the dashboard
+# Pages project name and output dir are defined in apps/dash/wrangler.jsonc (`name`, `pages_build_output_dir`).
 
 name: Deploy Dash (Cloudflare Pages)
 
@@ -53,4 +52,4 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/dash
           packageManager: bun
-          command: pages deploy dist --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT_DASH }}
+          command: pages deploy

@@ -1,0 +1,6 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Must match the Cloudflare Pages project name in the dashboard.
+  "name": "dash",
+  "pages_build_output_dir": "dist"
+}
