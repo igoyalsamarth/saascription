@@ -2,7 +2,7 @@
 export const siteName = "Saascription";
 
 /** Web app — sign in and product UI. */
-export const appSignInUrl = process.env.NEXT_PUBLIC_DASH_URL ?? "http://localhost:5173";
+export const appSignInUrl = "https://dash.saascription.app";
 
 /**
  * Used for absolute URLs in metadata (Open Graph, canonical, etc.).
