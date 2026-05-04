@@ -1,11 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-
-import { useClient } from "@/lib/client";
-
-export const dashboardKeys = {
-  all: ["dashboard"] as const,
-  overview: () => [...dashboardKeys.all, "overview"] as const,
-};
+import { buildDashboardOverviewFromSubscriptions } from "../lib/workspace-subscription-aggregates";
+import { useWorkspaceDataBundleQuery } from "@/services/workspace";
 
 export type DashboardCategoryKey =
   | "software"
@@ -35,16 +29,8 @@ export type DashboardOverview = {
   recentActivity: { title: string; subtitle: string } | null;
 };
 
-export type DashboardOverviewResponse = {
-  dashboard: DashboardOverview;
-};
-
 export function useDashboardOverview() {
-  const client = useClient();
-  return useQuery({
-    queryKey: dashboardKeys.overview(),
-    queryFn: () =>
-      client.get("users/me/dashboard").json<DashboardOverviewResponse>(),
-    select: (data) => data.dashboard,
-  });
+  return useWorkspaceDataBundleQuery((data) =>
+    buildDashboardOverviewFromSubscriptions(data.subscriptions),
+  );
 }

@@ -33,6 +33,20 @@ export async function getWorkspaceForOwner(
   return row ?? null;
 }
 
+export async function getWorkspaceByIdForOwner(
+  db: D1Database,
+  workspaceId: string,
+  ownerUserId: string,
+): Promise<WorkspaceRow | null> {
+  const row = await db
+    .prepare(
+      `SELECT id, name FROM workspaces WHERE id = ? AND owner_user_id = ?`,
+    )
+    .bind(workspaceId, ownerUserId)
+    .first<WorkspaceRow>();
+  return row ?? null;
+}
+
 export async function ensureUserFromClerkApi(
   db: D1Database,
   clerkUser: ClerkApiUser,

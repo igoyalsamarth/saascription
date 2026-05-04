@@ -16,6 +16,8 @@ export type UserMe = {
 
 export type UserMeResponse = {
   user: UserMe;
+  hasWorkspace: boolean;
+  workspace: { id: string; name: string | null } | null;
 };
 
 export function useUserMe() {
@@ -23,6 +25,5 @@ export function useUserMe() {
   return useQuery({
     queryKey: userKeys.me(),
     queryFn: () => client.get("users/me").json<UserMeResponse>(),
-    select: (data) => data.user,
   });
 }

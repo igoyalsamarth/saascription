@@ -1,23 +1,16 @@
 import {
   type UseMutationOptions,
   useMutation,
-  useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
 import { useClient } from "@/lib/client";
 import type { SubscriptionRow } from "@/lib/subscriptions";
-import { calendarKeys } from "@/services/calendar";
-import { dashboardKeys } from "@/services/dashboard";
-import { spendsKeys } from "@/services/spends";
-
-export const subscriptionKeys = {
-  all: ["workspace-subscriptions"] as const,
-  me: () => [...subscriptionKeys.all, "me"] as const,
-};
-
-export type WorkspaceSubscriptionsResponse = {
-  subscriptions: SubscriptionRow[];
-};
+import {
+  getWorkspaceBundleQueryKey,
+  useWorkspaceDataBundleQuery,
+  type WorkspaceDataBundleResponse,
+  workspaceKeys,
+} from "@/services/workspace";
 
 export type CreateSubscriptionResponse = {
   ok: true;
@@ -28,6 +21,16 @@ export type UpdateSubscriptionResponse = {
   ok: true;
   subscription: SubscriptionRow;
 };
+
+type BundleRollbackContext = {
+  previous: WorkspaceDataBundleResponse | undefined;
+};
+
+/** Callback fields are implemented internally (optimistic + rollback); omit from options. */
+type SubscriptionMutationRestOptions<TData, TVariables> = Omit<
+  UseMutationOptions<TData, Error, TVariables, BundleRollbackContext>,
+  "mutationFn" | "onMutate" | "onError" | "onSuccess" | "onSettled"
+>;
 
 function patchBody(
   row: Omit<SubscriptionRow, "id" | "saasId" | "status" | "cancelledAt">,
@@ -41,31 +44,25 @@ function patchBody(
 }
 
 export function useWorkspaceSubscriptionsQuery() {
-  const client = useClient();
-  return useQuery({
-    queryKey: subscriptionKeys.me(),
-    queryFn: () =>
-      client
-        .get("workspaces/me/subscriptions")
-        .json<WorkspaceSubscriptionsResponse>(),
-    staleTime: Number.POSITIVE_INFINITY,
-  });
+  return useWorkspaceDataBundleQuery((data) => ({
+    subscriptions: data.subscriptions,
+  }));
 }
 
 export function useCreateSubscriptionMutation(
-  options?: Omit<
-    UseMutationOptions<
-      CreateSubscriptionResponse,
-      Error,
-      SubscriptionRow,
-      unknown
-    >,
-    "mutationFn"
+  options?: SubscriptionMutationRestOptions<
+    CreateSubscriptionResponse,
+    SubscriptionRow
   >,
 ) {
   const client = useClient();
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<
+    CreateSubscriptionResponse,
+    Error,
+    SubscriptionRow,
+    BundleRollbackContext
+  >({
     ...options,
     mutationFn: async (row) => {
       return client
@@ -80,39 +77,58 @@ export function useCreateSubscriptionMutation(
         })
         .json<CreateSubscriptionResponse>();
     },
-    onSuccess: async (data, variables, onMutateResult, context) => {
-      queryClient.setQueryData<WorkspaceSubscriptionsResponse>(
-        subscriptionKeys.me(),
-        (old) => ({
-          subscriptions: [...(old?.subscriptions ?? []), data.subscription],
-        }),
+    onMutate: async (row) => {
+      const key = getWorkspaceBundleQueryKey(queryClient);
+      if (!key) {
+        return { previous: undefined };
+      }
+      await queryClient.cancelQueries({
+        queryKey: key,
+      });
+      const previous = queryClient.getQueryData<WorkspaceDataBundleResponse>(
+        key,
       );
-      await queryClient.invalidateQueries({
-        queryKey: dashboardKeys.overview(),
+      queryClient.setQueryData<WorkspaceDataBundleResponse>(
+        key,
+        (old) => {
+          if (!old) {
+            return old;
+          }
+          return { ...old, subscriptions: [...old.subscriptions, row] };
+        },
+      );
+      return { previous };
+    },
+    onError: (_err, _row, context) => {
+      if (context?.previous !== undefined) {
+        const key = getWorkspaceBundleQueryKey(queryClient);
+        if (key) {
+          queryClient.setQueryData(key, context.previous);
+        }
+      }
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: workspaceKeys.bundle(),
       });
-      await queryClient.invalidateQueries({
-        queryKey: calendarKeys.renewals(),
-      });
-      await queryClient.invalidateQueries({ queryKey: spendsKeys.all });
-      await options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
 }
 
 export function useUpdateSubscriptionMutation(
-  options?: Omit<
-    UseMutationOptions<
-      UpdateSubscriptionResponse,
-      Error,
-      { id: string; row: SubscriptionRow },
-      unknown
-    >,
-    "mutationFn"
+  options?: SubscriptionMutationRestOptions<
+    UpdateSubscriptionResponse,
+    { id: string; row: SubscriptionRow }
   >,
 ) {
   const client = useClient();
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<
+    UpdateSubscriptionResponse,
+    Error,
+    { id: string; row: SubscriptionRow },
+    BundleRollbackContext
+  >({
     ...options,
     mutationFn: async ({ id, row }) => {
       return client
@@ -121,57 +137,99 @@ export function useUpdateSubscriptionMutation(
         })
         .json<UpdateSubscriptionResponse>();
     },
-    onSuccess: async (data, variables, onMutateResult, context) => {
-      queryClient.setQueryData<WorkspaceSubscriptionsResponse>(
-        subscriptionKeys.me(),
-        (old) => ({
-          subscriptions: (old?.subscriptions ?? []).map((s) =>
-            s.id === data.subscription.id ? data.subscription : s,
-          ),
-        }),
+    onMutate: async (variables) => {
+      const key = getWorkspaceBundleQueryKey(queryClient);
+      if (!key) {
+        return { previous: undefined };
+      }
+      await queryClient.cancelQueries({
+        queryKey: key,
+      });
+      const previous = queryClient.getQueryData<WorkspaceDataBundleResponse>(
+        key,
       );
-      await queryClient.invalidateQueries({
-        queryKey: dashboardKeys.overview(),
+      const { id, row } = variables;
+      queryClient.setQueryData<WorkspaceDataBundleResponse>(
+        key,
+        (old) => {
+          if (!old) {
+            return old;
+          }
+          return {
+            ...old,
+            subscriptions: old.subscriptions.map((s) =>
+              s.id === id ? { ...row, id } : s,
+            ),
+          };
+        },
+      );
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous !== undefined) {
+        const key = getWorkspaceBundleQueryKey(queryClient);
+        if (key) {
+          queryClient.setQueryData(key, context.previous);
+        }
+      }
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: workspaceKeys.bundle(),
       });
-      await queryClient.invalidateQueries({
-        queryKey: calendarKeys.renewals(),
-      });
-      await queryClient.invalidateQueries({ queryKey: spendsKeys.all });
-      await options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
 }
 
 export function useDeleteSubscriptionMutation(
-  options?: Omit<
-    UseMutationOptions<{ ok: true }, Error, string, unknown>,
-    "mutationFn"
-  >,
+  options?: SubscriptionMutationRestOptions<{ ok: true }, string>,
 ) {
   const client = useClient();
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<{ ok: true }, Error, string, BundleRollbackContext>({
     ...options,
     mutationFn: async (id: string) => {
       return client
         .delete(`workspaces/me/subscriptions/${id}`)
         .json<{ ok: true }>();
     },
-    onSuccess: async (data, id, onMutateResult, context) => {
-      queryClient.setQueryData<WorkspaceSubscriptionsResponse>(
-        subscriptionKeys.me(),
-        (old) => ({
-          subscriptions: (old?.subscriptions ?? []).filter((s) => s.id !== id),
-        }),
+    onMutate: async (id) => {
+      const key = getWorkspaceBundleQueryKey(queryClient);
+      if (!key) {
+        return { previous: undefined };
+      }
+      await queryClient.cancelQueries({
+        queryKey: key,
+      });
+      const previous = queryClient.getQueryData<WorkspaceDataBundleResponse>(
+        key,
       );
-      await queryClient.invalidateQueries({
-        queryKey: dashboardKeys.overview(),
+      queryClient.setQueryData<WorkspaceDataBundleResponse>(
+        key,
+        (old) => {
+          if (!old) {
+            return old;
+          }
+          return {
+            ...old,
+            subscriptions: old.subscriptions.filter((s) => s.id !== id),
+          };
+        },
+      );
+      return { previous };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous !== undefined) {
+        const key = getWorkspaceBundleQueryKey(queryClient);
+        if (key) {
+          queryClient.setQueryData(key, context.previous);
+        }
+      }
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: workspaceKeys.bundle(),
       });
-      await queryClient.invalidateQueries({
-        queryKey: calendarKeys.renewals(),
-      });
-      await queryClient.invalidateQueries({ queryKey: spendsKeys.all });
-      await options?.onSuccess?.(data, id, onMutateResult, context);
     },
   });
 }
@@ -182,37 +240,68 @@ export type CancelSubscriptionResponse = {
 };
 
 export function useCancelSubscriptionMutation(
-  options?: Omit<
-    UseMutationOptions<CancelSubscriptionResponse, Error, string, unknown>,
-    "mutationFn"
-  >,
+  options?: SubscriptionMutationRestOptions<CancelSubscriptionResponse, string>,
 ) {
   const client = useClient();
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<
+    CancelSubscriptionResponse,
+    Error,
+    string,
+    BundleRollbackContext
+  >({
     ...options,
     mutationFn: async (id: string) => {
       return client
         .post(`workspaces/me/subscriptions/${id}/cancel`)
         .json<CancelSubscriptionResponse>();
     },
-    onSuccess: async (data, variables, onMutateResult, context) => {
-      queryClient.setQueryData<WorkspaceSubscriptionsResponse>(
-        subscriptionKeys.me(),
-        (old) => ({
-          subscriptions: (old?.subscriptions ?? []).map((s) =>
-            s.id === data.subscription.id ? data.subscription : s,
-          ),
-        }),
+    onMutate: async (id) => {
+      const key = getWorkspaceBundleQueryKey(queryClient);
+      if (!key) {
+        return { previous: undefined };
+      }
+      await queryClient.cancelQueries({
+        queryKey: key,
+      });
+      const previous = queryClient.getQueryData<WorkspaceDataBundleResponse>(
+        key,
       );
-      await queryClient.invalidateQueries({
-        queryKey: dashboardKeys.overview(),
+      const cancelledAt = new Date().toISOString();
+      queryClient.setQueryData<WorkspaceDataBundleResponse>(
+        key,
+        (old) => {
+          if (!old) {
+            return old;
+          }
+          return {
+            ...old,
+            subscriptions: old.subscriptions.map((s) =>
+              s.id === id
+                ? {
+                    ...s,
+                    status: "cancelled" as const,
+                    cancelledAt,
+                  }
+                : s,
+            ),
+          };
+        },
+      );
+      return { previous };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous !== undefined) {
+        const key = getWorkspaceBundleQueryKey(queryClient);
+        if (key) {
+          queryClient.setQueryData(key, context.previous);
+        }
+      }
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: workspaceKeys.bundle(),
       });
-      await queryClient.invalidateQueries({
-        queryKey: calendarKeys.renewals(),
-      });
-      await queryClient.invalidateQueries({ queryKey: spendsKeys.all });
-      await options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
 }

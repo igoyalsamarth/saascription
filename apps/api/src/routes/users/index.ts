@@ -8,7 +8,10 @@ import {
   parseSpendsMonthsQuery,
 } from "../../controllers/spends";
 import { getUserById } from "../../controllers/users";
-import { ensureUserFromClerkApi } from "../../controllers/workspaces";
+import {
+  ensureUserFromClerkApi,
+  getWorkspaceForOwner,
+} from "../../controllers/workspaces";
 
 const usersRouter = new Hono<{ Bindings: CloudflareBindings }>();
 
@@ -44,6 +47,8 @@ usersRouter.get("/me", async (c) => {
     return c.json({ error: "User not found" }, 404);
   }
 
+  const workspace = await getWorkspaceForOwner(c.env.DB, userId);
+
   return c.json({
     user: {
       id: row.id,
@@ -51,6 +56,10 @@ usersRouter.get("/me", async (c) => {
       name: row.name,
       imageUrl: row.image_url,
     },
+    hasWorkspace: !!workspace,
+    workspace: workspace
+      ? { id: workspace.id, name: workspace.name }
+      : null,
   });
 });
 

@@ -1,6 +1,5 @@
 import {
   ArrowRight01Icon,
-  Calendar01Icon,
   CloudIcon,
   Notification01Icon,
 } from "@hugeicons/core-free-icons";
@@ -8,7 +7,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Badge,
   Button,
-  buttonVariants,
   Card,
   CardContent,
   CardDescription,
@@ -19,14 +17,9 @@ import {
   ChartTooltip,
   ChartTooltipContent,
   cn,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
   SidebarTrigger,
 } from "@saascription/ui";
-import { Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   Area,
   AreaChart,
@@ -37,7 +30,13 @@ import {
   PieChart,
   XAxis,
 } from "recharts";
-import { type SpendsMonthsWindow, useSpendsAnalytics } from "@/services/spends";
+import {
+  type SpendsAnalytics,
+  type SpendsHighestRow,
+  type SpendsMonthsWindow,
+  type SpendsOpportunity,
+  useSpendsAnalytics,
+} from "@/services/spends";
 
 import {
   DASH_SCROLL_CONTENT,
@@ -73,7 +72,7 @@ const categoryChartConfig = {
 } satisfies ChartConfig;
 
 export function SpendsAnalytics() {
-  const [months, setMonths] = useState<SpendsMonthsWindow>(6);
+  const months: SpendsMonthsWindow = 6;
   const {
     data: spends,
     isPending: spendsPending,
@@ -251,7 +250,7 @@ export function SpendsAnalytics() {
                   cancelled
                 </Badge>
               ) : null}
-              {spends.savings.opportunities.map((op) => (
+              {spends.savings.opportunities.map((op: SpendsOpportunity) => (
                 <div
                   key={op.title}
                   className="flex items-center justify-between gap-2 rounded-md border border-primary-foreground/25 bg-primary-foreground/10 px-3 py-2.5"
@@ -317,13 +316,15 @@ export function SpendsAnalytics() {
                         strokeWidth={0}
                         paddingAngle={1}
                       >
-                        {categoryDonut.map((entry) => (
-                          <Cell
-                            key={entry.name}
-                            fill={`var(--color-${entry.key})`}
-                            className="stroke-transparent"
-                          />
-                        ))}
+                        {categoryDonut.map(
+                          (entry: SpendsAnalytics["categoryBreakdown"][number]) => (
+                            <Cell
+                              key={entry.name}
+                              fill={`var(--color-${entry.key})`}
+                              className="stroke-transparent"
+                            />
+                          ),
+                        )}
                         <Label
                           content={({ viewBox }) => {
                             if (
@@ -369,7 +370,8 @@ export function SpendsAnalytics() {
                     </PieChart>
                   </ChartContainer>
                   <ul className="w-full min-w-0 space-y-2.5 text-xs sm:max-w-52">
-                    {categoryDonut.map((c) => (
+                    {categoryDonut.map(
+                      (c: SpendsAnalytics["categoryBreakdown"][number]) => (
                       <li
                         key={c.name}
                         className="flex items-center justify-between gap-2"
@@ -428,7 +430,7 @@ export function SpendsAnalytics() {
                         </td>
                       </tr>
                     ) : (
-                      highestSpends.map((row) => (
+                      highestSpends.map((row: SpendsHighestRow) => (
                         <tr
                           key={row.subscriptionId}
                           className="border-b border-border/60 last:border-0"

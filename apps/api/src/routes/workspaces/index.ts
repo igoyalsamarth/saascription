@@ -1,5 +1,6 @@
 import { getAuth } from "@hono/clerk-auth";
 import { Hono } from "hono";
+import { buildWorkspaceDataBundle } from "../../controllers/workspace-data-bundle";
 import {
   createWorkspaceForOwner,
   ensureUserFromClerkApi,
@@ -10,6 +11,22 @@ import { subscriptionsRouter } from "./subscriptions";
 const workspacesRouter = new Hono<{ Bindings: CloudflareBindings }>();
 
 workspacesRouter.route("/me/subscriptions", subscriptionsRouter);
+
+workspacesRouter.get("/me/data", async (c) => {
+  const { userId } = getAuth(c);
+  if (!userId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const workspaceId = c.req.query("workspaceId")?.trim() || null;
+  const result = await buildWorkspaceDataBundle(c.env.DB, userId, {
+    workspaceId: workspaceId || undefined,
+  });
+  if (!result.ok) {
+    return c.json({ error: "workspace_not_found" }, 403);
+  }
+  return c.json(result.payload);
+});
 
 workspacesRouter.get("/me", async (c) => {
   const { userId } = getAuth(c);

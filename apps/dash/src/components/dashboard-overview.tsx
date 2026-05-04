@@ -38,7 +38,7 @@ import {
   PieChart,
   XAxis,
 } from "recharts";
-import { useDashboardOverview } from "@/services/dashboard";
+import { useDashboardOverview, type DashboardOverview } from "@/services/dashboard";
 
 import {
   DASH_SCROLL_CONTENT,
@@ -94,8 +94,7 @@ export function DashboardOverview() {
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 bg-muted/30 px-4">
         <p className="text-sm text-destructive">{message}</p>
         <p className="text-center text-xs text-muted-foreground">
-          Try refreshing. If this persists, check that the API is running and
-          VITE_API_URL is correct.
+          Try refreshing. If this persists, contact support.
         </p>
       </div>
     );
@@ -317,7 +316,8 @@ export function DashboardOverview() {
                   No upcoming renewals with a next billing date.
                 </p>
               ) : (
-                dashboard.upcomingRenewals.map((r) => (
+                dashboard.upcomingRenewals.map(
+                  (r: DashboardOverview["upcomingRenewals"][number]) => (
                   <div
                     key={r.id}
                     className="flex items-center justify-between gap-2 border-b border-border/60 py-3 last:border-b-0"
@@ -349,7 +349,7 @@ export function DashboardOverview() {
             </CardContent>
             <CardFooter className="pt-0">
               <Link
-                to="/"
+                to="/cal"
                 className={buttonVariants({
                   variant: "secondary",
                   className: "w-full",
@@ -396,18 +396,21 @@ export function DashboardOverview() {
                         strokeWidth={0}
                         paddingAngle={1}
                       >
-                        {categoryData.map((entry) => (
-                          <Cell
-                            key={entry.name}
-                            fill={`var(--color-${entry.key})`}
-                            className="stroke-transparent"
-                          />
-                        ))}
+                        {categoryData.map(
+                          (entry: DashboardOverview["categoryBreakdown"][number]) => (
+                            <Cell
+                              key={entry.name}
+                              fill={`var(--color-${entry.key})`}
+                              className="stroke-transparent"
+                            />
+                          ),
+                        )}
                       </Pie>
                     </PieChart>
                   </ChartContainer>
                   <ul className="w-full min-w-0 space-y-2 text-xs sm:max-w-48">
-                    {categoryData.map((c) => (
+                    {categoryData.map(
+                      (c: DashboardOverview["categoryBreakdown"][number]) => (
                       <li
                         key={c.name}
                         className="flex items-center justify-between gap-2"

@@ -1,11 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-
-import { useClient } from "@/lib/client";
-
-export const calendarKeys = {
-  all: ["calendar"] as const,
-  renewals: () => [...calendarKeys.all, "renewals"] as const,
-};
+import { buildCalendarRenewalsFromSubscriptions } from "../lib/workspace-subscription-aggregates";
+import { useWorkspaceDataBundleQuery } from "@/services/workspace";
 
 export type CalendarBillingInterval = "monthly" | "yearly" | "custom";
 
@@ -19,17 +13,8 @@ export type CalendarRenewalItem = {
   inDays: number;
 };
 
-export type CalendarResponse = {
-  calendar: {
-    renewals: CalendarRenewalItem[];
-  };
-};
-
 export function useCalendarRenewals() {
-  const client = useClient();
-  return useQuery({
-    queryKey: calendarKeys.renewals(),
-    queryFn: () => client.get("users/me/calendar").json<CalendarResponse>(),
-    select: (data) => data.calendar.renewals,
-  });
+  return useWorkspaceDataBundleQuery((data) =>
+    buildCalendarRenewalsFromSubscriptions(data.subscriptions),
+  );
 }

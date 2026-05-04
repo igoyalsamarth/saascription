@@ -38,7 +38,6 @@ import {
   startOfWeekSunday,
 } from "@/lib/calendar-utils";
 import { useCalendarRenewals } from "@/services/calendar";
-import { useUserMe } from "@/services/user";
 import type { CalendarViewMode } from "../lib/calendar-types";
 import {
   DASH_SCROLL_CONTENT,
@@ -76,7 +75,6 @@ function weekRangeLabel(start: Date) {
 }
 
 export function CalendarPage() {
-  const { data: user } = useUserMe();
   const {
     data: renewals,
     isPending: calendarPending,
@@ -102,10 +100,6 @@ export function CalendarPage() {
   );
 
   const realToday = new Date();
-
-  const userLabel = user?.id
-    ? `User ID: ${user.id.length > 20 ? `${user.id.slice(0, 10)}…` : user.id}`
-    : "Signed in";
 
   const goPrev = useCallback(() => {
     if (view === "week") {
@@ -230,7 +224,6 @@ export function CalendarPage() {
             <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
               Subscription Calendar
             </h1>
-            <p className="mt-0.5 text-xs text-muted-foreground">{userLabel}</p>
           </div>
         </div>
 

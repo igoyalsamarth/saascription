@@ -41,7 +41,8 @@ function initialsFromProfile(user: UserMe | undefined): string {
 export function SidebarUserMenu() {
   const { signOut } = useClerk();
   const navigate = useNavigate();
-  const { data: user, isPending, isError } = useUserMe();
+  const { data: me, isPending, isError } = useUserMe();
+  const user = me?.user;
 
   const displayName = user?.name?.trim() || user?.email || "Account";
 

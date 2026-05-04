@@ -22,6 +22,10 @@ export type SubscriptionRow = {
   status: SubscriptionStatus;
   /** Present when `status === 'cancelled'` (API datetime string). */
   cancelledAt?: string | null;
+  /** From API: stored cost in cents (used for charts when present). */
+  costCents?: number;
+  /** From API: `subscriptions.created_at` (SQLite / ISO-ish). */
+  createdAt?: string;
 };
 
 export function isoDateLocal(d = new Date()): string {

@@ -83,7 +83,8 @@ CREATE INDEX IF NOT EXISTS idx_saas_name ON saas (name);
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS subscriptions (
   id TEXT PRIMARY KEY NOT NULL,
-  workspace_email_id TEXT NOT NULL,
+  workspace_id TEXT NOT NULL,
+  created_by TEXT NOT NULL,
   saas_id TEXT NOT NULL,
   sub_type TEXT NOT NULL,
   status TEXT NOT NULL CHECK (
@@ -100,12 +101,13 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   external_ref TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-  FOREIGN KEY (workspace_email_id) REFERENCES workspace_emails(id) ON DELETE CASCADE,
+  FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (saas_id) REFERENCES saas(id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_subscriptions_email
-  ON subscriptions (workspace_email_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_workspace
+  ON subscriptions (workspace_id);
 
 CREATE INDEX IF NOT EXISTS idx_subscriptions_saas
   ON subscriptions (saas_id);
@@ -131,23 +133,26 @@ CREATE INDEX IF NOT EXISTS idx_subscriptions_subscribed_at
 -- external_ref: optional idempotency key from bank/email/provider sync
 -- (UNIQUE when set; multiple NULLs allowed per SQLite rules).
 -- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS subscription_payment_events (
+CREATE TABLE IF NOT EXISTS transactions (
   id TEXT PRIMARY KEY NOT NULL,
   subscription_id TEXT,
   amount INTEGER NOT NULL,
   currency TEXT NOT NULL DEFAULT 'USD',
-  paid_at TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (
+    status IN ('pending', 'completed', 'failed')
+  ),
+  failure_reason TEXT,
   external_ref TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   FOREIGN KEY (subscription_id) REFERENCES subscriptions(id) ON DELETE SET NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_payment_events_subscription
-  ON subscription_payment_events (subscription_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_subscription
+  ON transactions (subscription_id);
 
-CREATE INDEX IF NOT EXISTS idx_payment_events_paid_at
-  ON subscription_payment_events (paid_at);
+CREATE INDEX IF NOT EXISTS idx_transactions_status
+  ON transactions (status);
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_payment_events_external_ref
-  ON subscription_payment_events (external_ref)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_external_ref
+  ON transactions (external_ref)
   WHERE external_ref IS NOT NULL;

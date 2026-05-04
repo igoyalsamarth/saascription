@@ -3,7 +3,6 @@ import {
   backfillPrimaryWorkspaceEmailIfMissing,
   getPrimaryWorkspaceEmailId,
 } from "./workspace-emails";
-import { getWorkspaceForOwner } from "./workspaces";
 
 export type SubscriptionStatus =
   | "new"
@@ -24,16 +23,19 @@ export type SubscriptionRow = {
   status: SubscriptionStatus;
   /** ISO-ish datetime string when `status === 'cancelled'`. */
   cancelledAt?: string | null;
+  /** Stored subscription cost in cents (for analytics). */
+  costCents?: number;
+  /** When the row was created (`subscriptions.created_at`). */
+  createdAt?: string;
 };
 
-const MAX_ROWS = 200;
 const MAX_NAME_LEN = 200;
 const MAX_AMOUNT_LEN = 32;
 const MAX_ID_LEN = 64;
 /** Fills required `sub_type` for user-entered rows. */
 const USER_ENTERED_SUB_TYPE = "entered" as const;
 
-const ENTERED_STATUS = "old" as const;
+const ENTERED_STATUS = "new" as const;
 
 function amountOk(s: string): boolean {
   const t = s.trim();
@@ -256,6 +258,7 @@ function mapDbRowToSubscriptionRow(r: {
   next_billing_at: string | null;
   status: string | null;
   cancelled_at: string | null;
+  created_at?: string | null;
 }): SubscriptionRow | null {
   const interval = parseInterval(r.billing_interval ?? "monthly");
   if (!interval) {
@@ -263,7 +266,7 @@ function mapDbRowToSubscriptionRow(r: {
   }
   const nb = normalizeNextBillingAt(r.next_billing_at);
   const status = parseSubscriptionStatus(r.status);
-  return {
+  const row: SubscriptionRow = {
     id: r.sid,
     saasId: r.saas_id,
     name: r.saas_name,
@@ -272,85 +275,54 @@ function mapDbRowToSubscriptionRow(r: {
     nextBillingAt: nb && isValidNextBillingDate(nb) ? nb : "",
     status,
     cancelledAt: r.cancelled_at?.trim() || null,
+    costCents: r.cost ?? 0,
   };
+  const ca = r.created_at?.trim();
+  if (ca) {
+    row.createdAt = ca;
+  }
+  return row;
 }
 
-async function resolveWorkspaceMailForOwner(
+async function resolvePrimaryWorkspaceEmailForWorkspace(
   db: D1Database,
+  workspaceId: string,
   ownerUserId: string,
 ): Promise<
-  | { ok: true; wsId: string; workspaceEmailId: string }
-  | "no_workspace"
-  | "no_user_email"
+  | { ok: true; workspaceEmailId: string }
+  | { ok: false; reason: "no_user_email" }
 > {
-  const ws = await getWorkspaceForOwner(db, ownerUserId);
-  if (!ws) {
-    return "no_workspace";
-  }
-
-  let workspaceEmailId = await getPrimaryWorkspaceEmailId(db, ws.id);
+  let workspaceEmailId = await getPrimaryWorkspaceEmailId(db, workspaceId);
   if (!workspaceEmailId) {
     const backfill = await backfillPrimaryWorkspaceEmailIfMissing(
       db,
-      ws.id,
+      workspaceId,
       ownerUserId,
     );
     if (!backfill.ok) {
-      return "no_user_email";
+      return { ok: false, reason: "no_user_email" };
     }
     workspaceEmailId = backfill.id;
   }
 
-  return { ok: true, wsId: ws.id, workspaceEmailId };
+  return { ok: true, workspaceEmailId };
 }
 
-async function countSubscriptionsForWorkspace(
+export async function listSubscriptionsForWorkspace(
   db: D1Database,
   workspaceId: string,
-): Promise<number> {
-  const row = await db
-    .prepare(
-      `SELECT COUNT(*) AS c FROM subscriptions s
-       INNER JOIN workspace_emails we ON we.id = s.workspace_email_id
-       WHERE we.workspace_id = ?`,
-    )
-    .bind(workspaceId)
-    .first<{ c: number }>();
-  return row?.c ?? 0;
-}
-
-export async function listSubscriptionsForOwner(
-  db: D1Database,
-  ownerUserId: string,
-): Promise<SubscriptionRow[] | "no_workspace"> {
-  const ws = await getWorkspaceForOwner(db, ownerUserId);
-  if (!ws) {
-    return "no_workspace";
-  }
-
+): Promise<SubscriptionRow[]> {
   const res = await db
     .prepare(
-      `SELECT s.id AS sid, s.saas_id, sa.name AS saas_name, s.cost,
-              s.billing_interval, s.next_billing_at, s.status, s.cancelled_at
+      `SELECT *
        FROM subscriptions s
-       INNER JOIN workspace_emails we ON we.id = s.workspace_email_id
-       INNER JOIN workspaces w ON w.id = we.workspace_id
        INNER JOIN saas sa ON sa.id = s.saas_id
-       WHERE w.owner_user_id = ?
+       WHERE s.workspace_id = ?
        ORDER BY s.created_at ASC`,
     )
-    .bind(ownerUserId)
-    .all<{
-      sid: string;
-      saas_id: string;
-      saas_name: string;
-      cost: number | null;
-      billing_interval: string | null;
-      next_billing_at: string | null;
-      status: string | null;
-      cancelled_at: string | null;
-    }>();
-
+    .bind(workspaceId)
+    .all();
+  
   const out: SubscriptionRow[] = [];
   for (const r of res.results ?? []) {
     const mapped = mapDbRowToSubscriptionRow(r);
@@ -361,22 +333,22 @@ export async function listSubscriptionsForOwner(
   return out;
 }
 
-async function getSubscriptionRowByIdForOwner(
+async function getSubscriptionRowByIdForWorkspace(
   db: D1Database,
-  ownerUserId: string,
+  workspaceId: string,
   subscriptionId: string,
 ): Promise<SubscriptionRow | null> {
   const r = await db
     .prepare(
       `SELECT s.id AS sid, s.saas_id, sa.name AS saas_name, s.cost,
-              s.billing_interval, s.next_billing_at, s.status, s.cancelled_at
+              s.billing_interval, s.next_billing_at, s.status, s.cancelled_at, s.created_at
        FROM subscriptions s
        INNER JOIN workspace_emails we ON we.id = s.workspace_email_id
        INNER JOIN workspaces w ON w.id = we.workspace_id
        INNER JOIN saas sa ON sa.id = s.saas_id
-       WHERE s.id = ? AND w.owner_user_id = ?`,
+       WHERE s.id = ? AND w.id = ?`,
     )
-    .bind(subscriptionId, ownerUserId)
+    .bind(subscriptionId, workspaceId)
     .first<{
       sid: string;
       saas_id: string;
@@ -386,6 +358,7 @@ async function getSubscriptionRowByIdForOwner(
       next_billing_at: string | null;
       status: string | null;
       cancelled_at: string | null;
+      created_at: string | null;
     }>();
   if (!r) {
     return null;
@@ -393,22 +366,23 @@ async function getSubscriptionRowByIdForOwner(
   return mapDbRowToSubscriptionRow(r);
 }
 
-export async function createSubscriptionForOwner(
+export async function createSubscriptionForWorkspace(
   db: D1Database,
+  workspaceId: string,
   ownerUserId: string,
   row: SubscriptionRow,
 ): Promise<
-  SubscriptionRow | "no_workspace" | "no_user_email" | "limit_reached"
+  SubscriptionRow | "no_user_email" | "limit_reached"
 > {
-  const ctx = await resolveWorkspaceMailForOwner(db, ownerUserId);
-  if (ctx === "no_workspace" || ctx === "no_user_email") {
-    return ctx;
+  const ctx = await resolvePrimaryWorkspaceEmailForWorkspace(
+    db,
+    workspaceId,
+    ownerUserId,
+  );
+  if (!ctx.ok) {
+    return "no_user_email";
   }
-
-  const n = await countSubscriptionsForWorkspace(db, ctx.wsId);
-  if (n >= MAX_ROWS) {
-    return "limit_reached";
-  }
+  const { workspaceEmailId } = ctx;
 
   const saas = await findOrCreateSaasByName(db, row.name);
   const costCents = amountStringToCostCents(row.amount);
@@ -424,7 +398,7 @@ export async function createSubscriptionForOwner(
     )
     .bind(
       row.id,
-      ctx.workspaceEmailId,
+      workspaceEmailId,
       saas.id,
       USER_ENTERED_SUB_TYPE,
       ENTERED_STATUS,
@@ -434,7 +408,11 @@ export async function createSubscriptionForOwner(
     )
     .run();
 
-  const fresh = await getSubscriptionRowByIdForOwner(db, ownerUserId, row.id);
+  const fresh = await getSubscriptionRowByIdForWorkspace(
+    db,
+    workspaceId,
+    row.id,
+  );
   return (
     fresh ?? {
       id: row.id,
@@ -445,26 +423,22 @@ export async function createSubscriptionForOwner(
       nextBillingAt: row.nextBillingAt,
       status: ENTERED_STATUS,
       cancelledAt: null,
+      costCents,
     }
   );
 }
 
-export async function updateSubscriptionForOwner(
+export async function updateSubscriptionForWorkspace(
   db: D1Database,
-  ownerUserId: string,
+  workspaceId: string,
   subscriptionId: string,
   fields: SubscriptionPatchFields,
 ): Promise<
-  SubscriptionRow | "no_workspace" | "not_found" | "cannot_edit_cancelled"
+  SubscriptionRow | "not_found" | "cannot_edit_cancelled"
 > {
-  const ws = await getWorkspaceForOwner(db, ownerUserId);
-  if (!ws) {
-    return "no_workspace";
-  }
-
-  const existing = await getSubscriptionRowByIdForOwner(
+  const existing = await getSubscriptionRowByIdForWorkspace(
     db,
-    ownerUserId,
+    workspaceId,
     subscriptionId,
   );
   if (!existing) {
@@ -488,8 +462,7 @@ export async function updateSubscriptionForOwner(
        WHERE id = ?
        AND workspace_email_id IN (
          SELECT we.id FROM workspace_emails we
-         INNER JOIN workspaces w ON w.id = we.workspace_id
-         WHERE w.owner_user_id = ?
+         WHERE we.workspace_id = ?
        )`,
     )
     .bind(
@@ -498,21 +471,21 @@ export async function updateSubscriptionForOwner(
       fields.interval,
       fields.nextBillingAt,
       subscriptionId,
-      ownerUserId,
+      workspaceId,
     )
     .run();
 
-  const fresh = await getSubscriptionRowByIdForOwner(
+  const fresh = await getSubscriptionRowByIdForWorkspace(
     db,
-    ownerUserId,
+    workspaceId,
     subscriptionId,
   );
   return fresh ?? "not_found";
 }
 
-export async function deleteSubscriptionForOwner(
+export async function deleteSubscriptionForWorkspace(
   db: D1Database,
-  ownerUserId: string,
+  workspaceId: string,
   subscriptionId: string,
 ): Promise<boolean> {
   const res = await db
@@ -520,30 +493,23 @@ export async function deleteSubscriptionForOwner(
       `DELETE FROM subscriptions
        WHERE id = ?
        AND workspace_email_id IN (
-         SELECT we.id FROM workspace_emails we
-         INNER JOIN workspaces w ON w.id = we.workspace_id
-         WHERE w.owner_user_id = ?
+         SELECT we.id FROM workspace_emails we WHERE we.workspace_id = ?
        )`,
     )
-    .bind(subscriptionId, ownerUserId)
+    .bind(subscriptionId, workspaceId)
     .run();
 
   return (res.meta?.changes ?? 0) > 0;
 }
 
-export async function cancelSubscriptionForOwner(
+export async function cancelSubscriptionForWorkspace(
   db: D1Database,
-  ownerUserId: string,
+  workspaceId: string,
   subscriptionId: string,
-): Promise<SubscriptionRow | "no_workspace" | "not_found"> {
-  const ws = await getWorkspaceForOwner(db, ownerUserId);
-  if (!ws) {
-    return "no_workspace";
-  }
-
-  const existing = await getSubscriptionRowByIdForOwner(
+): Promise<SubscriptionRow | "not_found"> {
+  const existing = await getSubscriptionRowByIdForWorkspace(
     db,
-    ownerUserId,
+    workspaceId,
     subscriptionId,
   );
   if (!existing) {
@@ -561,17 +527,15 @@ export async function cancelSubscriptionForOwner(
          updated_at = datetime('now')
        WHERE id = ?
        AND workspace_email_id IN (
-         SELECT we.id FROM workspace_emails we
-         INNER JOIN workspaces w ON w.id = we.workspace_id
-         WHERE w.owner_user_id = ?
+         SELECT we.id FROM workspace_emails we WHERE we.workspace_id = ?
        )`,
     )
-    .bind(subscriptionId, ownerUserId)
+    .bind(subscriptionId, workspaceId)
     .run();
 
-  const fresh = await getSubscriptionRowByIdForOwner(
+  const fresh = await getSubscriptionRowByIdForWorkspace(
     db,
-    ownerUserId,
+    workspaceId,
     subscriptionId,
   );
   return fresh ?? "not_found";

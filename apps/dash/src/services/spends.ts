@@ -1,6 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-
-import { useClient } from "@/lib/client";
+import { buildSpendsAnalyticsFromSubscriptions } from "../lib/workspace-subscription-aggregates";
+import { useWorkspaceDataBundleQuery } from "@/services/workspace";
 
 export type SpendsMonthsWindow = 3 | 6 | 12;
 
@@ -39,24 +38,11 @@ export type SpendsAnalytics = {
   };
 };
 
-export type SpendsAnalyticsResponse = {
-  spends: SpendsAnalytics;
-};
-
-export const spendsKeys = {
-  all: ["spends"] as const,
-  analytics: (months: SpendsMonthsWindow) =>
-    [...spendsKeys.all, "analytics", months] as const,
-};
-
 export function useSpendsAnalytics(months: SpendsMonthsWindow) {
-  const client = useClient();
-  return useQuery({
-    queryKey: spendsKeys.analytics(months),
-    queryFn: () =>
-      client
-        .get("users/me/spends", { searchParams: { months: String(months) } })
-        .json<SpendsAnalyticsResponse>(),
-    select: (data) => data.spends,
-  });
+  return useWorkspaceDataBundleQuery((data) =>
+    buildSpendsAnalyticsFromSubscriptions(
+      data.subscriptions,
+      months,
+    ),
+  );
 }
