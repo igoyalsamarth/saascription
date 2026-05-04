@@ -1,5 +1,4 @@
 import {
-  Calendar01Icon,
   Dollar01Icon,
   LayerIcon,
   Notification01Icon,
@@ -40,7 +39,6 @@ import {
   XAxis,
 } from "recharts";
 import { useDashboardOverview } from "@/services/dashboard";
-import { useUserMe } from "@/services/user";
 
 import {
   DASH_SCROLL_CONTENT,
@@ -71,7 +69,6 @@ const sparkConfig: ChartConfig = {
 };
 
 export function DashboardOverview() {
-  const { data: user } = useUserMe();
   const {
     data: dashboard,
     isPending: dashboardPending,
@@ -79,11 +76,6 @@ export function DashboardOverview() {
     error: dashboardErr,
   } = useDashboardOverview();
   const [spendWindow, setSpendWindow] = useState<"6m" | "1y">("6m");
-  const [rangeLabel, setRangeLabel] = useState("Last 30 days");
-
-  const userLabel = user?.id
-    ? `User ID: ${user.id.length > 20 ? `${user.id.slice(0, 10)}…` : user.id}`
-    : "Signed in";
 
   if (dashboardPending) {
     return (
@@ -127,7 +119,7 @@ export function DashboardOverview() {
               Dashboard overview
             </h1>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Your subscription ecosystem at a glance ({userLabel})
+              Your subscription ecosystem at a glance
             </p>
           </div>
         </div>
@@ -148,37 +140,6 @@ export function DashboardOverview() {
               aria-hidden
             />
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              className={buttonVariants({
-                variant: "outline",
-                size: "sm",
-                className: "inline-flex gap-1.5",
-              })}
-            >
-              <HugeiconsIcon
-                icon={Calendar01Icon}
-                className="size-3.5 text-muted-foreground"
-              />
-              {rangeLabel}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-40">
-              <DropdownMenuItem
-                onClick={() => {
-                  setRangeLabel("Last 30 days");
-                }}
-              >
-                Last 30 days
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setRangeLabel("Last 90 days");
-                }}
-              >
-                Last 90 days
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </header>
 
@@ -480,15 +441,6 @@ export function DashboardOverview() {
                 <CardTitle>Recent activity</CardTitle>
                 <CardDescription>Latest events on your account</CardDescription>
               </div>
-              <Link
-                to="/"
-                className={buttonVariants({
-                  variant: "link",
-                  className: "h-auto p-0 text-xs",
-                })}
-              >
-                View all
-              </Link>
             </CardHeader>
             <CardContent>
               {dashboard.recentActivity ? (

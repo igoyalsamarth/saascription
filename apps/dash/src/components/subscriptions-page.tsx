@@ -41,7 +41,6 @@ import {
   type SubscriptionTableRow,
 } from "@/lib/subscriptions-table";
 import { useWorkspaceSubscriptionsQuery } from "@/services/subscriptions";
-import { useUserMe } from "@/services/user";
 import {
   DASH_SCROLL_CONTENT,
   DASH_STICKY_HEADER,
@@ -206,7 +205,6 @@ function tabLabelContent(tab: (typeof SUBSCRIPTION_TABS)[number]) {
 }
 
 export function SubscriptionsPage() {
-  const { data: user } = useUserMe();
   const {
     data: subscriptionsPayload,
     isPending,
@@ -214,11 +212,6 @@ export function SubscriptionsPage() {
     error,
   } = useWorkspaceSubscriptionsQuery();
   const [tab, setTab] = useState<SubscriptionTabId>("all");
-  const [rangeLabel, setRangeLabel] = useState("Last 30 days");
-
-  const userLabel = user?.id
-    ? `User ID: ${user.id.length > 20 ? `${user.id.slice(0, 10)}…` : user.id}`
-    : "Signed in";
 
   const tableRows = useMemo(() => {
     const raw = subscriptionsPayload?.subscriptions ?? [];
@@ -283,7 +276,7 @@ export function SubscriptionsPage() {
               Subscriptions
             </h1>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Track renewals, spend, and status ({userLabel})
+              Track renewals, spend, and status
             </p>
           </div>
         </div>
@@ -304,37 +297,6 @@ export function SubscriptionsPage() {
               aria-hidden
             />
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              className={buttonVariants({
-                variant: "outline",
-                size: "sm",
-                className: "inline-flex gap-1.5",
-              })}
-            >
-              <HugeiconsIcon
-                icon={Calendar01Icon}
-                className="size-3.5 text-muted-foreground"
-              />
-              {rangeLabel}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-40">
-              <DropdownMenuItem
-                onClick={() => {
-                  setRangeLabel("Last 30 days");
-                }}
-              >
-                Last 30 days
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setRangeLabel("Last 90 days");
-                }}
-              >
-                Last 90 days
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </header>
 

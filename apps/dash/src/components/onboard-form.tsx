@@ -44,7 +44,7 @@ export function OnboardForm() {
 
   const createWorkspace = useCreateWorkspaceMutation({
     onSuccess: async () => {
-      await navigate({ to: "/", replace: true });
+      await navigate({ to: "/configure", replace: true });
     },
   });
 

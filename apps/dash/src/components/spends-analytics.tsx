@@ -38,7 +38,6 @@ import {
   XAxis,
 } from "recharts";
 import { type SpendsMonthsWindow, useSpendsAnalytics } from "@/services/spends";
-import { useUserMe } from "@/services/user";
 
 import {
   DASH_SCROLL_CONTENT,
@@ -74,7 +73,6 @@ const categoryChartConfig = {
 } satisfies ChartConfig;
 
 export function SpendsAnalytics() {
-  const { data: user } = useUserMe();
   const [months, setMonths] = useState<SpendsMonthsWindow>(6);
   const {
     data: spends,
@@ -82,13 +80,6 @@ export function SpendsAnalytics() {
     isError: spendsError,
     error: spendsErr,
   } = useSpendsAnalytics(months);
-
-  const rangeLabel =
-    months === 3
-      ? "Last 3 months"
-      : months === 12
-        ? "Last 12 months"
-        : "Last 6 months";
 
   const currencyFmt = useMemo(
     () =>
@@ -98,10 +89,6 @@ export function SpendsAnalytics() {
       }),
     [],
   );
-
-  const userLabel = user?.id
-    ? `User ID: ${user.id.length > 20 ? `${user.id.slice(0, 10)}…` : user.id}`
-    : "Signed in";
 
   if (spendsPending) {
     return (
@@ -146,7 +133,7 @@ export function SpendsAnalytics() {
               Spends &amp; analytics
             </h1>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Track your monthly expenses and AI-driven savings ({userLabel})
+              Track your monthly expenses and AI-driven savings
             </p>
           </div>
         </div>
@@ -167,44 +154,6 @@ export function SpendsAnalytics() {
               aria-hidden
             />
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              className={buttonVariants({
-                variant: "outline",
-                size: "sm",
-                className: "inline-flex gap-1.5",
-              })}
-            >
-              <HugeiconsIcon
-                icon={Calendar01Icon}
-                className="size-3.5 text-muted-foreground"
-              />
-              {rangeLabel}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-40">
-              <DropdownMenuItem
-                onClick={() => {
-                  setMonths(3);
-                }}
-              >
-                Last 3 months
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setMonths(6);
-                }}
-              >
-                Last 6 months
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setMonths(12);
-                }}
-              >
-                Last 12 months
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </header>
 
@@ -454,15 +403,6 @@ export function SpendsAnalytics() {
                 <CardTitle>Highest spends</CardTitle>
                 <CardDescription>Top line items this period</CardDescription>
               </div>
-              <Link
-                to="/spends"
-                className={buttonVariants({
-                  variant: "link",
-                  className: "h-auto p-0 text-xs",
-                })}
-              >
-                View all
-              </Link>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
