@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { useClient } from "#/lib/client";
+import { useClient } from "@/lib/client";
 
 export const userKeys = {
   all: ["user"] as const,
@@ -16,7 +16,6 @@ export type UserMe = {
 
 export type UserMeResponse = {
   user: UserMe;
-  hasWorkspace: boolean;
   workspace: { id: string; name: string | null } | null;
 };
 

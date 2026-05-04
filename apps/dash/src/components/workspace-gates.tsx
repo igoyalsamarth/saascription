@@ -1,11 +1,11 @@
 import { Navigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
-import { useWorkspaceMe } from "@/services/workspace";
+import { useUserMe } from "@/services/user";
 
 /** Full app shell: send users without a workspace to onboarding. */
 export function WorkspaceGate({ children }: { children: ReactNode }) {
-  const { data, isPending, isError, error } = useWorkspaceMe();
+  const { data, isPending, isError, error } = useUserMe();
 
   if (isPending) {
     return (
@@ -22,14 +22,13 @@ export function WorkspaceGate({ children }: { children: ReactNode }) {
       <div className="flex flex-1 flex-col items-center justify-center gap-2 bg-background px-4">
         <p className="text-sm text-destructive">{message}</p>
         <p className="text-center text-xs text-muted-foreground">
-          Try refreshing. If this persists, check that the API is running and
-          VITE_API_URL is correct.
+          Try refreshing. If this persists, contact support.
         </p>
       </div>
     );
   }
 
-  if (!data?.hasWorkspace) {
+  if (!data?.workspace?.id) {
     return <Navigate to="/onboard" replace />;
   }
 
@@ -38,7 +37,7 @@ export function WorkspaceGate({ children }: { children: ReactNode }) {
 
 /** Onboarding page: if they already have a workspace, go home. */
 export function OnboardGate({ children }: { children: ReactNode }) {
-  const { data, isPending, isError, error } = useWorkspaceMe();
+  const { data, isPending, isError, error } = useUserMe();
 
   if (isPending) {
     return (
@@ -55,14 +54,13 @@ export function OnboardGate({ children }: { children: ReactNode }) {
       <div className="flex flex-1 flex-col items-center justify-center gap-2 bg-background px-4">
         <p className="text-sm text-destructive">{message}</p>
         <p className="text-center text-xs text-muted-foreground">
-          Try refreshing. If this persists, check that the API is running and
-          VITE_API_URL is correct.
+          Try refreshing. If this persists, contact support.
         </p>
       </div>
     );
   }
 
-  if (data?.hasWorkspace) {
+  if (data?.workspace?.id) {
     return <Navigate to="/" replace />;
   }
 

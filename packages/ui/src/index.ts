@@ -6,6 +6,7 @@ export {
 export { Badge, badgeVariants } from "./components/badge";
 export { Button } from "./components/button";
 export { buttonVariants } from "./components/button-variants";
+export { Calendar, CalendarDayButton } from "./components/calendar";
 export {
   Card,
   CardAction,
@@ -15,7 +16,6 @@ export {
   CardHeader,
   CardTitle,
 } from "./components/card";
-export { Calendar, CalendarDayButton } from "./components/calendar";
 export {
   type ChartConfig,
   ChartContainer,
@@ -30,6 +30,8 @@ export {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./components/dropdown-menu";

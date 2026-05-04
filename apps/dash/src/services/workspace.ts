@@ -15,6 +15,10 @@ export const workspaceKeys = {
   bundle: () => [...workspaceKeys.all, "bundle"] as const,
 };
 
+export function workspaceBundleQueryKey(workspaceId: string) {
+  return [...workspaceKeys.bundle(), workspaceId] as const;
+}
+
 export type WorkspaceDataBundleResponse = {
   subscriptions: SubscriptionRow[];
 };
@@ -25,24 +29,10 @@ export function getWorkspaceBundleQueryKey(
 ): readonly unknown[] | null {
   const me = queryClient.getQueryData<UserMeResponse>(userKeys.me());
   const wid = me?.workspace?.id;
-  if (!me?.hasWorkspace || !wid) {
+  if (!wid) {
     return null;
   }
-  return [...workspaceKeys.bundle(), wid] as const;
-}
-
-export function useWorkspaceMe() {
-  const q = useUserMe();
-  return {
-    ...q,
-    data:
-      q.data !== undefined
-        ? {
-            hasWorkspace: q.data.hasWorkspace,
-            workspace: q.data.workspace,
-          }
-        : undefined,
-  };
+  return workspaceBundleQueryKey(wid);
 }
 
 export function useWorkspaceDataBundleQuery<
@@ -51,15 +41,15 @@ export function useWorkspaceDataBundleQuery<
   const client = useClient();
   const { data: me, isSuccess: meSuccess } = useUserMe();
   const workspaceId = me?.workspace?.id;
-  const enabled = meSuccess && !!me?.hasWorkspace && !!workspaceId;
+  const enabled = meSuccess && !!workspaceId;
 
   return useQuery({
-    queryKey: [...workspaceKeys.bundle(), workspaceId ?? null] as const,
+    queryKey: workspaceId
+      ? workspaceBundleQueryKey(workspaceId)
+      : ([...workspaceKeys.bundle(), null] as const),
     queryFn: () =>
       client
-        .get("workspaces/me/data", {
-          searchParams: workspaceId ? { workspaceId } : {},
-        })
+        .get(`workspaces/${workspaceId}/data`)
         .json<WorkspaceDataBundleResponse>(),
     staleTime: Number.POSITIVE_INFINITY,
     select,

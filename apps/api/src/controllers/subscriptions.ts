@@ -314,15 +314,26 @@ export async function listSubscriptionsForWorkspace(
 ): Promise<SubscriptionRow[]> {
   const res = await db
     .prepare(
-      `SELECT *
+      `SELECT s.id AS sid, s.saas_id, sa.name AS saas_name, s.cost,
+              s.billing_interval, s.next_billing_at, s.status, s.cancelled_at, s.created_at
        FROM subscriptions s
        INNER JOIN saas sa ON sa.id = s.saas_id
        WHERE s.workspace_id = ?
        ORDER BY s.created_at ASC`,
     )
     .bind(workspaceId)
-    .all();
-  
+    .all<{
+      sid: string;
+      saas_id: string;
+      saas_name: string;
+      cost: number | null;
+      billing_interval: string | null;
+      next_billing_at: string | null;
+      status: string | null;
+      cancelled_at: string | null;
+      created_at?: string | null;
+    }>();
+
   const out: SubscriptionRow[] = [];
   for (const r of res.results ?? []) {
     const mapped = mapDbRowToSubscriptionRow(r);
@@ -343,10 +354,8 @@ async function getSubscriptionRowByIdForWorkspace(
       `SELECT s.id AS sid, s.saas_id, sa.name AS saas_name, s.cost,
               s.billing_interval, s.next_billing_at, s.status, s.cancelled_at, s.created_at
        FROM subscriptions s
-       INNER JOIN workspace_emails we ON we.id = s.workspace_email_id
-       INNER JOIN workspaces w ON w.id = we.workspace_id
        INNER JOIN saas sa ON sa.id = s.saas_id
-       WHERE s.id = ? AND w.id = ?`,
+       WHERE s.id = ? AND s.workspace_id = ?`,
     )
     .bind(subscriptionId, workspaceId)
     .first<{
@@ -369,72 +378,47 @@ async function getSubscriptionRowByIdForWorkspace(
 export async function createSubscriptionForWorkspace(
   db: D1Database,
   workspaceId: string,
-  ownerUserId: string,
-  row: SubscriptionRow,
+  createdByUserId: string,
+  body: { id: string; name: string; amount: string; interval: string; nextBillingAt: string },
 ): Promise<
-  SubscriptionRow | "no_user_email" | "limit_reached"
+  { ok: true }
 > {
-  const ctx = await resolvePrimaryWorkspaceEmailForWorkspace(
-    db,
-    workspaceId,
-    ownerUserId,
-  );
-  if (!ctx.ok) {
-    return "no_user_email";
-  }
-  const { workspaceEmailId } = ctx;
 
-  const saas = await findOrCreateSaasByName(db, row.name);
-  const costCents = amountStringToCostCents(row.amount);
+  const saas = await findOrCreateSaasByName(db, body.name);
+  const costCents = amountStringToCostCents(body.amount);
 
   await db
     .prepare(
       `INSERT INTO subscriptions (
-         id, workspace_email_id, saas_id, sub_type, status,
+         id, created_by, workspace_id, saas_id, sub_type, status,
          cost, currency, billing_interval, subscribed_at,
          next_billing_at,
          created_at, updated_at
-       ) VALUES (?, ?, ?, ?, ?, ?, 'USD', ?, datetime('now'), ?, datetime('now'), datetime('now'))`,
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, 'USD', ?, datetime('now'), ?, datetime('now'), datetime('now'))`,
     )
     .bind(
-      row.id,
-      workspaceEmailId,
+      body.id,
+      createdByUserId,
+      workspaceId,
       saas.id,
       USER_ENTERED_SUB_TYPE,
       ENTERED_STATUS,
       costCents,
-      row.interval,
-      row.nextBillingAt,
+      body.interval,
+      body.nextBillingAt,
     )
     .run();
 
-  const fresh = await getSubscriptionRowByIdForWorkspace(
-    db,
-    workspaceId,
-    row.id,
-  );
-  return (
-    fresh ?? {
-      id: row.id,
-      saasId: saas.id,
-      name: saas.name,
-      amount: row.amount,
-      interval: row.interval,
-      nextBillingAt: row.nextBillingAt,
-      status: ENTERED_STATUS,
-      cancelledAt: null,
-      costCents,
-    }
-  );
+  return { ok: true };
 }
 
 export async function updateSubscriptionForWorkspace(
   db: D1Database,
   workspaceId: string,
   subscriptionId: string,
-  fields: SubscriptionPatchFields,
+  body: { name: string; amount: string; interval: string; nextBillingAt: string },
 ): Promise<
-  SubscriptionRow | "not_found" | "cannot_edit_cancelled"
+  { ok: true } | { ok: false; error: string }
 > {
   const existing = await getSubscriptionRowByIdForWorkspace(
     db,
@@ -442,14 +426,14 @@ export async function updateSubscriptionForWorkspace(
     subscriptionId,
   );
   if (!existing) {
-    return "not_found";
+    return { ok: false, error: "Subscription not found" } as const;
   }
   if (existing.status === "cancelled") {
-    return "cannot_edit_cancelled";
+    return { ok: false, error: "Cancelled subscriptions cannot be edited." } as const;
   }
 
-  const saas = await findOrCreateSaasByName(db, fields.name);
-  const costCents = amountStringToCostCents(fields.amount);
+  const saas = await findOrCreateSaasByName(db, body.name);
+  const costCents = amountStringToCostCents(body.amount);
 
   await db
     .prepare(
@@ -460,63 +444,62 @@ export async function updateSubscriptionForWorkspace(
          next_billing_at = ?,
          updated_at = datetime('now')
        WHERE id = ?
-       AND workspace_email_id IN (
-         SELECT we.id FROM workspace_emails we
-         WHERE we.workspace_id = ?
-       )`,
+       AND workspace_id = ?
+       `,
     )
     .bind(
       saas.id,
       costCents,
-      fields.interval,
-      fields.nextBillingAt,
+      body.interval,
+      body.nextBillingAt,
       subscriptionId,
       workspaceId,
     )
     .run();
 
-  const fresh = await getSubscriptionRowByIdForWorkspace(
-    db,
-    workspaceId,
-    subscriptionId,
-  );
-  return fresh ?? "not_found";
+  return { ok: true };
 }
 
 export async function deleteSubscriptionForWorkspace(
   db: D1Database,
   workspaceId: string,
   subscriptionId: string,
-): Promise<boolean> {
-  const res = await db
-    .prepare(
-      `DELETE FROM subscriptions
-       WHERE id = ?
-       AND workspace_email_id IN (
-         SELECT we.id FROM workspace_emails we WHERE we.workspace_id = ?
-       )`,
-    )
-    .bind(subscriptionId, workspaceId)
-    .run();
-
-  return (res.meta?.changes ?? 0) > 0;
-}
-
-export async function cancelSubscriptionForWorkspace(
-  db: D1Database,
-  workspaceId: string,
-  subscriptionId: string,
-): Promise<SubscriptionRow | "not_found"> {
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const existing = await getSubscriptionRowByIdForWorkspace(
     db,
     workspaceId,
     subscriptionId,
   );
   if (!existing) {
-    return "not_found";
+    return { ok: false, error: "Subscription not found" } as const;
+  }
+  await db
+    .prepare(
+      `DELETE FROM subscriptions
+       WHERE id = ?
+       AND workspace_id = ?
+       `,
+    )
+    .bind(subscriptionId, workspaceId)
+    .run();
+  return { ok: true };
+}
+
+export async function cancelSubscriptionForWorkspace(
+  db: D1Database,
+  workspaceId: string,
+  subscriptionId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const existing = await getSubscriptionRowByIdForWorkspace(
+    db,
+    workspaceId,
+    subscriptionId,
+  );
+  if (!existing) {
+    return { ok: false, error: "Subscription not found" } as const;
   }
   if (existing.status === "cancelled") {
-    return existing;
+    return { ok: false, error: "Cancelled subscriptions cannot be cancelled." } as const;
   }
 
   await db
@@ -526,17 +509,11 @@ export async function cancelSubscriptionForWorkspace(
          cancelled_at = datetime('now'),
          updated_at = datetime('now')
        WHERE id = ?
-       AND workspace_email_id IN (
-         SELECT we.id FROM workspace_emails we WHERE we.workspace_id = ?
-       )`,
+       AND workspace_id = ?
+       `,
     )
     .bind(subscriptionId, workspaceId)
     .run();
 
-  const fresh = await getSubscriptionRowByIdForWorkspace(
-    db,
-    workspaceId,
-    subscriptionId,
-  );
-  return fresh ?? "not_found";
+  return { ok: true };
 }

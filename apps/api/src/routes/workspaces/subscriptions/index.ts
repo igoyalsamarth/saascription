@@ -5,11 +5,9 @@ import {
   createSubscriptionForWorkspace,
   deleteSubscriptionForWorkspace,
   listSubscriptionsForWorkspace,
-  parseSubscriptionFieldsBody,
-  parseSubscriptionPayload,
   updateSubscriptionForWorkspace,
 } from "../../../controllers/subscriptions";
-import { getWorkspaceForOwner } from "../../../controllers/workspaces";
+import { getWorkspaceByIdForOwner } from "../../../controllers/workspaces";
 
 const subscriptionsRouter = new Hono<{ Bindings: CloudflareBindings }>();
 
@@ -18,11 +16,15 @@ subscriptionsRouter.get("/", async (c) => {
   if (!userId) {
     return c.json({ error: "Unauthorized" }, 401);
   }
-  const ws = await getWorkspaceForOwner(c.env.DB, userId);
+  const workspaceId = c.req.param("workspaceId");
+  if (!workspaceId) {
+    return c.json({ error: "Missing workspaceId" }, 400);
+  }
+  const ws = await getWorkspaceByIdForOwner(c.env.DB, workspaceId, userId);
   if (!ws) {
     return c.json({ error: "Workspace not found" }, 404);
   }
-  const list = await listSubscriptionsForWorkspace(c.env.DB, ws.id);
+  const list = await listSubscriptionsForWorkspace(c.env.DB, workspaceId);
   return c.json({ subscriptions: list });
 });
 
@@ -31,39 +33,14 @@ subscriptionsRouter.post("/", async (c) => {
   if (!userId) {
     return c.json({ error: "Unauthorized" }, 401);
   }
-  const ws = await getWorkspaceForOwner(c.env.DB, userId);
-  if (!ws) {
-    return c.json({ error: "Workspace not found" }, 404);
+  const workspaceId = c.req.param("workspaceId");
+  if (!workspaceId) {
+    return c.json({ error: "Missing workspaceId" }, 400);
   }
-  let body: unknown;
-  try {
-    body = await c.req.json();
-  } catch {
-    return c.json({ error: "Invalid JSON" }, 400);
-  }
-  const parsed = parseSubscriptionPayload(body, { requireId: false });
-  if (!parsed.ok) {
-    return c.json({ error: parsed.error }, 400);
-  }
-  const saved = await createSubscriptionForWorkspace(
-    c.env.DB,
-    ws.id,
-    userId,
-    parsed.row,
-  );
-  if (saved === "no_user_email") {
-    return c.json(
-      {
-        error:
-          "Your account needs an email before subscriptions can be saved.",
-      },
-      422,
-    );
-  }
-  if (saved === "limit_reached") {
-    return c.json({ error: "Maximum number of subscriptions reached" }, 400);
-  }
-  return c.json({ ok: true, subscription: saved });
+  const body = await c.req.json<{ id: string; name: string; amount: string; interval: string; nextBillingAt: string }>();
+  
+  await createSubscriptionForWorkspace(c.env.DB, workspaceId, userId, body);
+  return c.json({ ok: true });
 });
 
 subscriptionsRouter.patch("/:id", async (c) => {
@@ -71,40 +48,18 @@ subscriptionsRouter.patch("/:id", async (c) => {
   if (!userId) {
     return c.json({ error: "Unauthorized" }, 401);
   }
-  const ws = await getWorkspaceForOwner(c.env.DB, userId);
-  if (!ws) {
-    return c.json({ error: "Workspace not found" }, 404);
+  const workspaceId = c.req.param("workspaceId");
+  if (!workspaceId) {
+    return c.json({ error: "Missing workspaceId" }, 400);
   }
   const id = c.req.param("id");
   if (!id) {
     return c.json({ error: "Missing id" }, 400);
   }
-  let body: unknown;
-  try {
-    body = await c.req.json();
-  } catch {
-    return c.json({ error: "Invalid JSON" }, 400);
-  }
-  const parsed = parseSubscriptionFieldsBody(body);
-  if (!parsed.ok) {
-    return c.json({ error: parsed.error }, 400);
-  }
-  const updated = await updateSubscriptionForWorkspace(
-    c.env.DB,
-    ws.id,
-    id,
-    parsed.fields,
-  );
-  if (updated === "not_found") {
-    return c.json({ error: "Subscription not found" }, 404);
-  }
-  if (updated === "cannot_edit_cancelled") {
-    return c.json(
-      { error: "Cancelled subscriptions cannot be edited." },
-      409,
-    );
-  }
-  return c.json({ ok: true, subscription: updated });
+  const body = await c.req.json<{ name: string; amount: string; interval: string; nextBillingAt: string }>();
+
+  await updateSubscriptionForWorkspace(c.env.DB, workspaceId, id, body);
+  return c.json({ ok: true });
 });
 
 subscriptionsRouter.post("/:id/cancel", async (c) => {
@@ -112,19 +67,17 @@ subscriptionsRouter.post("/:id/cancel", async (c) => {
   if (!userId) {
     return c.json({ error: "Unauthorized" }, 401);
   }
-  const ws = await getWorkspaceForOwner(c.env.DB, userId);
-  if (!ws) {
-    return c.json({ error: "Workspace not found" }, 404);
+  const workspaceId = c.req.param("workspaceId");
+  if (!workspaceId) {
+    return c.json({ error: "Missing workspaceId" }, 400);
   }
   const id = c.req.param("id");
   if (!id) {
     return c.json({ error: "Missing id" }, 400);
   }
-  const result = await cancelSubscriptionForWorkspace(c.env.DB, ws.id, id);
-  if (result === "not_found") {
-    return c.json({ error: "Subscription not found" }, 404);
-  }
-  return c.json({ ok: true, subscription: result });
+  await cancelSubscriptionForWorkspace(c.env.DB, workspaceId, id);
+
+  return c.json({ ok: true });
 });
 
 subscriptionsRouter.delete("/:id", async (c) => {
@@ -132,18 +85,15 @@ subscriptionsRouter.delete("/:id", async (c) => {
   if (!userId) {
     return c.json({ error: "Unauthorized" }, 401);
   }
-  const ws = await getWorkspaceForOwner(c.env.DB, userId);
-  if (!ws) {
-    return c.json({ error: "Workspace not found" }, 404);
+  const workspaceId = c.req.param("workspaceId");
+  if (!workspaceId) {
+    return c.json({ error: "Missing workspaceId" }, 400);
   }
   const id = c.req.param("id");
   if (!id) {
     return c.json({ error: "Missing id" }, 400);
   }
-  const deleted = await deleteSubscriptionForWorkspace(c.env.DB, ws.id, id);
-  if (!deleted) {
-    return c.json({ error: "Subscription not found" }, 404);
-  }
+  await deleteSubscriptionForWorkspace(c.env.DB, workspaceId, id);
   return c.json({ ok: true });
 });
 

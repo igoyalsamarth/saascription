@@ -1,4 +1,5 @@
 import {
+  ArrowDown01Icon,
   Calendar01Icon,
   Cancel01Icon,
   Delete02Icon,
@@ -17,6 +18,11 @@ import {
   CardHeader,
   CardTitle,
   cn,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
   Field,
   FieldError,
   FieldGroup,
@@ -30,8 +36,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@saascription/ui";
-import { HTTPError } from "ky";
 import { Link } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { HTTPError } from "ky";
 import {
   type ReactElement,
   useCallback,
@@ -46,12 +53,12 @@ import {
   DASH_STICKY_HEADER_PAD,
 } from "../lib/dashboard-page-layout";
 import {
+  type BillingInterval,
   emptySubscriptionRow,
   isoDateLocal,
-  serializeSubscriptionsSnapshot,
-  type BillingInterval,
   type RowFieldErrors,
   type SubscriptionRow,
+  serializeSubscriptionsSnapshot,
   validateSubscriptionRow,
 } from "../lib/subscriptions";
 import {
@@ -61,17 +68,17 @@ import {
   useUpdateSubscriptionMutation,
   useWorkspaceSubscriptionsQuery,
 } from "../services/subscriptions";
+import { useUserMe } from "../services/user";
+import {
+  workspaceBundleQueryKey,
+  type WorkspaceDataBundleResponse,
+} from "../services/workspace";
 
 const intervalOptions: { value: BillingInterval; label: string }[] = [
   { value: "monthly", label: "Monthly" },
   { value: "yearly", label: "Yearly" },
   { value: "custom", label: "Custom / other" },
 ];
-
-const selectClass =
-  "h-7 w-full min-w-0 rounded-md border border-input bg-input/20 px-2 py-0.5 text-sm transition-colors outline-none " +
-  "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 " +
-  "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-xs/relaxed dark:bg-input/30";
 
 function intervalLabel(v: BillingInterval): string {
   return intervalOptions.find((o) => o.value === v)?.label ?? v;
@@ -199,6 +206,8 @@ async function httpErrorMessage(e: unknown): Promise<string> {
 type CardMode = "view" | "edit";
 
 export function ConfigureSubscriptionsPage() {
+  const queryClient = useQueryClient();
+  const { data: me } = useUserMe();
   const subscriptionsQuery = useWorkspaceSubscriptionsQuery();
   const [rows, setRows] = useState<SubscriptionRow[]>([]);
   const [modeById, setModeById] = useState<Record<string, CardMode>>({});
@@ -326,7 +335,7 @@ export function ConfigureSubscriptionsPage() {
         setRowErrors((prev) => ({ ...prev, [id]: errors }));
         return;
       }
-      setRowErrors((prev) => {
+      setRowErrors((prev) => {  
         const next = { ...prev };
         delete next[id];
         return next;
@@ -334,29 +343,51 @@ export function ConfigureSubscriptionsPage() {
       setSavingId(id);
       try {
         if (pendingIds.has(id)) {
-          const res = await createMutation.mutateAsync(row);
-          const saved = res.subscription;
+          await createMutation.mutateAsync(row);
           setPendingIds((p) => {
             const n = new Set(p);
             n.delete(id);
             return n;
           });
-          setRows((prev) =>
-            prev.map((r) => (r.id === id ? saved : r)),
-          );
-          setBaselineById((b) => ({ ...b, [saved.id]: { ...saved } }));
-          setModeById((m) => ({ ...m, [saved.id]: "view" }));
+          const wid = me?.workspace?.id;
+          if (wid) {
+            await queryClient.refetchQueries({
+              queryKey: workspaceBundleQueryKey(wid),
+            });
+            const bundle = queryClient.getQueryData<WorkspaceDataBundleResponse>(
+              workspaceBundleQueryKey(wid),
+            );
+            const saved = bundle?.subscriptions.find((s) => s.id === row.id);
+            if (saved) {
+              setRows((prev) =>
+                prev.map((r) => (r.id === id ? saved : r)),
+              );
+              setBaselineById((b) => ({ ...b, [saved.id]: { ...saved } }));
+            }
+          }
+          setModeById((m) => ({ ...m, [id]: "view" }));
         } else {
-          const res = await updateMutation.mutateAsync({
+          await updateMutation.mutateAsync({
             id,
             row,
           });
-          const saved = res.subscription;
-          setRows((prev) =>
-            prev.map((r) => (r.id === saved.id ? saved : r)),
-          );
-          setBaselineById((b) => ({ ...b, [saved.id]: { ...saved } }));
-          setModeById((m) => ({ ...m, [saved.id]: "view" }));
+          const wid = me?.workspace?.id;
+          if (wid) {
+            await queryClient.refetchQueries({
+              queryKey: workspaceBundleQueryKey(wid),
+            });
+            const bundle = queryClient.getQueryData<WorkspaceDataBundleResponse>(
+              workspaceBundleQueryKey(wid),
+            );
+            const saved = bundle?.subscriptions.find((s) => s.id === id);
+            if (saved) {
+              setRows((prev) =>
+                prev.map((r) => (r.id === saved.id ? saved : r)),
+              );
+              setBaselineById((b) => ({ ...b, [saved.id]: { ...saved } }));
+            }
+          }
+          setModeById((m) => ({ ...m, [id]: "view" }));
         }
         setApiErrorById((e) => {
           const next = { ...e };
@@ -373,20 +404,31 @@ export function ConfigureSubscriptionsPage() {
         setSavingId(null);
       }
     },
-    [rows, pendingIds, createMutation, updateMutation],
+    [rows, pendingIds, createMutation, updateMutation, queryClient, me?.workspace?.id],
   );
 
   const cancelSubscriptionCard = useCallback(
     async (id: string) => {
       setSavingId(id);
       try {
-        const res = await cancelSubscriptionMutation.mutateAsync(id);
-        const saved = res.subscription;
-        setRows((prev) =>
-          prev.map((r) => (r.id === saved.id ? saved : r)),
-        );
-        setBaselineById((b) => ({ ...b, [saved.id]: { ...saved } }));
-        setModeById((m) => ({ ...m, [saved.id]: "view" }));
+        await cancelSubscriptionMutation.mutateAsync(id);
+        const wid = me?.workspace?.id;
+        if (wid) {
+          await queryClient.refetchQueries({
+            queryKey: workspaceBundleQueryKey(wid),
+          });
+          const bundle = queryClient.getQueryData<WorkspaceDataBundleResponse>(
+            workspaceBundleQueryKey(wid),
+          );
+          const saved = bundle?.subscriptions.find((s) => s.id === id);
+          if (saved) {
+            setRows((prev) =>
+              prev.map((r) => (r.id === saved.id ? saved : r)),
+            );
+            setBaselineById((b) => ({ ...b, [saved.id]: { ...saved } }));
+          }
+        }
+        setModeById((m) => ({ ...m, [id]: "view" }));
         setApiErrorById((e) => {
           const next = { ...e };
           delete next[id];
@@ -402,7 +444,7 @@ export function ConfigureSubscriptionsPage() {
         setSavingId(null);
       }
     },
-    [cancelSubscriptionMutation],
+    [cancelSubscriptionMutation, queryClient, me?.workspace?.id],
   );
 
   const deleteCard = useCallback(
@@ -424,17 +466,32 @@ export function ConfigureSubscriptionsPage() {
       setSavingId(id);
       try {
         await deleteMutation.mutateAsync(id);
-        setRows((prev) => prev.filter((r) => r.id !== id));
-        setBaselineById((b) => {
-          const next = { ...b };
-          delete next[id];
-          return next;
-        });
-        setModeById((m) => {
-          const next = { ...m };
-          delete next[id];
-          return next;
-        });
+        const wid = me?.workspace?.id;
+        if (wid) {
+          await queryClient.refetchQueries({
+            queryKey: workspaceBundleQueryKey(wid),
+          });
+          const bundle = queryClient.getQueryData<WorkspaceDataBundleResponse>(
+            workspaceBundleQueryKey(wid),
+          );
+          if (bundle) {
+            setRows(bundle.subscriptions);
+            setBaselineById(() => {
+              const b: Record<string, SubscriptionRow> = {};
+              for (const r of bundle.subscriptions) {
+                b[r.id] = { ...r };
+              }
+              return b;
+            });
+            setModeById((prev) => {
+              const next: Record<string, CardMode> = {};
+              for (const r of bundle.subscriptions) {
+                next[r.id] = prev[r.id] ?? "view";
+              }
+              return next;
+            });
+          }
+        }
       } catch (e) {
         const msg = await httpErrorMessage(e);
         setApiErrorById((prev) => ({
@@ -445,7 +502,7 @@ export function ConfigureSubscriptionsPage() {
         setSavingId(null);
       }
     },
-    [pendingIds, deleteMutation],
+    [pendingIds, deleteMutation, queryClient, me?.workspace?.id],
   );
 
   const loadError =
@@ -775,23 +832,49 @@ export function ConfigureSubscriptionsPage() {
                                 Billing{" "}
                                 <span className="text-destructive">*</span>
                               </FieldLabel>
-                              <select
-                                id={`sub-interval-${row.id}`}
-                                required
-                                className={selectClass}
-                                value={row.interval}
-                                onChange={(e) =>
-                                  patchRow(row.id, {
-                                    interval: e.target.value as BillingInterval,
-                                  })
-                                }
-                              >
-                                {intervalOptions.map((opt) => (
-                                  <option key={opt.value} value={opt.value}>
-                                    {opt.label}
-                                  </option>
-                                ))}
-                              </select>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger
+                                  id={`sub-interval-${row.id}`}
+                                  type="button"
+                                  aria-required
+                                  className={cn(
+                                    buttonVariants({
+                                      variant: "outline",
+                                      size: "sm",
+                                    }),
+                                    "h-7 w-full min-w-0 justify-between gap-2 px-2 font-normal md:text-xs/relaxed",
+                                  )}
+                                >
+                                  <span className="truncate">
+                                    {intervalLabel(row.interval)}
+                                  </span>
+                                  <HugeiconsIcon
+                                    icon={ArrowDown01Icon}
+                                    className="size-3.5 shrink-0 opacity-70"
+                                    aria-hidden
+                                  />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start">
+                                  <DropdownMenuRadioGroup
+                                    value={row.interval}
+                                    onValueChange={(v) =>
+                                      patchRow(row.id, {
+                                        interval: v as BillingInterval,
+                                      })
+                                    }
+                                  >
+                                    {intervalOptions.map((opt) => (
+                                      <DropdownMenuRadioItem
+                                        key={opt.value}
+                                        value={opt.value}
+                                        closeOnClick
+                                      >
+                                        {opt.label}
+                                      </DropdownMenuRadioItem>
+                                    ))}
+                                  </DropdownMenuRadioGroup>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </Field>
                             <Field
                               data-invalid={

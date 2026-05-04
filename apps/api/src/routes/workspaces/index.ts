@@ -3,39 +3,43 @@ import { Hono } from "hono";
 import { buildWorkspaceDataBundle } from "../../controllers/workspace-data-bundle";
 import {
   createWorkspaceForOwner,
-  ensureUserFromClerkApi,
+  getWorkspaceByIdForOwner,
   getWorkspaceForOwner,
 } from "../../controllers/workspaces";
 import { subscriptionsRouter } from "./subscriptions";
 
 const workspacesRouter = new Hono<{ Bindings: CloudflareBindings }>();
 
-workspacesRouter.route("/me/subscriptions", subscriptionsRouter);
+workspacesRouter.route("/:workspaceId/subscriptions", subscriptionsRouter);
 
-workspacesRouter.get("/me/data", async (c) => {
+workspacesRouter.get("/:workspaceId/data", async (c) => {
   const { userId } = getAuth(c);
   if (!userId) {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  const workspaceId = c.req.query("workspaceId")?.trim() || null;
-  const result = await buildWorkspaceDataBundle(c.env.DB, userId, {
-    workspaceId: workspaceId || undefined,
-  });
+  const workspaceId = c.req.param("workspaceId");
+  if (!workspaceId) {
+    return c.json({ error: "Missing workspaceId" }, 400);
+  }
+  const ws = await getWorkspaceByIdForOwner(c.env.DB, workspaceId, userId);
+  if (!ws) {
+    return c.json({ error: "Workspace not found" }, 404);
+  }
+  const result = await buildWorkspaceDataBundle(c.env.DB, workspaceId);
   if (!result.ok) {
-    return c.json({ error: "workspace_not_found" }, 403);
+    return c.json({ error: result.reason }, 400);
   }
   return c.json(result.payload);
 });
 
-workspacesRouter.get("/me", async (c) => {
+workspacesRouter.get("/:workspaceId/me", async (c) => {
   const { userId } = getAuth(c);
   if (!userId) {
     return c.json({ error: "Unauthorized" }, 401);
   }
   const row = await getWorkspaceForOwner(c.env.DB, userId);
   return c.json({
-    hasWorkspace: !!row,
     workspace: row ? { id: row.id, name: row.name } : null,
   });
 });
@@ -45,47 +49,7 @@ workspacesRouter.post("/", async (c) => {
   if (!userId) {
     return c.json({ error: "Unauthorized" }, 401);
   }
-  const clerkClient = c.get("clerk");
-  let body: { workspaceName?: unknown; displayName?: unknown };
-  try {
-    body = await c.req.json();
-  } catch {
-    return c.json({ error: "Invalid JSON" }, 400);
-  }
-  const workspaceName =
-    typeof body.workspaceName === "string" ? body.workspaceName.trim() : "";
-  const displayName =
-    typeof body.displayName === "string" ? body.displayName.trim() : "";
-  if (!workspaceName || !displayName) {
-    return c.json({ error: "workspaceName and displayName are required" }, 400);
-  }
-  if (workspaceName.length > 120 || displayName.length > 120) {
-    return c.json({ error: "Fields too long" }, 400);
-  }
-
-  const existingUser = await c.env.DB.prepare(
-    "SELECT id FROM users WHERE id = ?",
-  )
-    .bind(userId)
-    .first();
-  if (!existingUser) {
-    try {
-      const user = await clerkClient.users.getUser(userId);
-      await ensureUserFromClerkApi(c.env.DB, user);
-    } catch (e) {
-      const status = (e as Error & { status?: number }).status;
-      if (status === 422) {
-        return c.json(
-          {
-            error:
-              "Account email is not available yet; wait a moment or ensure your Clerk profile has an email.",
-          },
-          422,
-        );
-      }
-      throw e;
-    }
-  }
+  const {workspaceName, displayName} = await c.req.json();
 
   try {
     const ws = await createWorkspaceForOwner(
