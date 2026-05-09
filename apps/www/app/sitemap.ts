@@ -15,11 +15,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: "weekly",
     },
-    {
-      url: absoluteUrl("/sign-in/"),
-      lastModified: now,
-      changeFrequency: "yearly",
-    },
   ];
   for (const slug of getPostSlugsFromDisk()) {
     const post = getPostBySlug(slug);

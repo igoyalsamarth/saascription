@@ -7,8 +7,13 @@ import { OnboardGate, WorkspaceGate } from "@/components/workspace-gates";
 
 import { DashboardAppShell } from "./dashboard-app-shell";
 
-function isSignInPath(pathname: string) {
-  return pathname === "/sign-in" || pathname.startsWith("/sign-in/");
+function isBareAuthPath(pathname: string) {
+  return (
+    pathname === "/sign-in" ||
+    pathname.startsWith("/sign-in/") ||
+    pathname === "/sign-up" ||
+    pathname.startsWith("/sign-up/")
+  );
 }
 
 function isOnboardPath(pathname: string) {
@@ -27,7 +32,7 @@ function RequireAuth({ children }: { children: ReactNode }) {
   }
 
   if (!userId) {
-    return <Navigate to="/sign-in" replace />;
+    return <Navigate to="/sign-up" replace />;
   }
 
   return (
@@ -44,7 +49,7 @@ function BareChrome({ children }: { children: ReactNode }) {
 }
 
 /**
- * "Bare" layout: no app sidebar (sign-in, 404, etc.).
+ * "Bare" layout: no app sidebar (sign-in, sign-up, 404, etc.).
  * Root 404 is `routes/$.tsx` with route id `"/$"`. Match objects expose this as
  * `routeId` — we must not use `id` (that is a unique *match* id, not the route id).
  */
@@ -57,10 +62,10 @@ function useIsSplat404() {
 export default function AppChrome({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isSplat404 = useIsSplat404();
-  const isSignIn = isSignInPath(pathname);
+  const isBareAuth = isBareAuthPath(pathname);
   const isOnboard = isOnboardPath(pathname);
 
-  if (isSignIn || isSplat404) {
+  if (isBareAuth || isSplat404) {
     return <BareChrome>{children}</BareChrome>;
   }
 

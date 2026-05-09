@@ -4,6 +4,9 @@ export const siteName = "Saascription";
 /** Web app — sign in and product UI. */
 export const appSignInUrl = "https://dash.saascription.app";
 
+/** Dash app sign-in page (absolute URL for cross-origin links from the marketing site). */
+export const appDashSignInUrl = `${appSignInUrl}/sign-in`;
+
 /**
  * Used for absolute URLs in metadata (Open Graph, canonical, etc.).
  * Set in production, e.g. `NEXT_PUBLIC_SITE_URL=https://yourdomain.com`

@@ -35,7 +35,7 @@ const mainNav: NavItem[] = [
   { title: "Spends & Savings", href: "/spends", icon: CoinsDollarIcon },
   { title: "Subscriptions", href: "/subs", icon: Cards01Icon },
   { title: "Calendar", href: "/cal", icon: Calendar01Icon },
-  { title: "AI Optimization", href: "/ai", icon: AiBrain01Icon },
+  { title: "Ask AI", href: "/ai", icon: AiBrain01Icon },
 ];
 
 export function AppSidebar() {
@@ -99,7 +99,7 @@ export function AppSidebar() {
                 icon={Configuration01Icon}
                 className="size-4 shrink-0"
               />
-              <span>Configure</span>
+              <span>Configure Subscriptions</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

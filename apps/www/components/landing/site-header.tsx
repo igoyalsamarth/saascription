@@ -3,7 +3,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { buttonVariants } from "@saascription/ui";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/landing/theme-toggle";
-import { appSignInUrl } from "@/lib/site";
+import { appDashSignInUrl, appSignInUrl } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 const mainNavLinks = [
@@ -46,6 +46,15 @@ export function SiteHeader() {
           </nav>
           <div className="ml-auto flex items-center gap-1 sm:gap-2">
             <ThemeToggle />
+            <Link
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "sm" }),
+                "h-9 rounded-full px-4 text-xs font-medium sm:h-10 sm:px-5 sm:text-sm",
+              )}
+              href={appDashSignInUrl}
+            >
+              Sign in
+            </Link>
             <Link
               className={cn(
                 buttonVariants({ variant: "default", size: "sm" }),
