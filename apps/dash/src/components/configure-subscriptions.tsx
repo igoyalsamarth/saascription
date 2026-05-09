@@ -36,8 +36,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@saascription/ui";
-import { Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { HTTPError } from "ky";
 import {
   type ReactElement,
@@ -70,9 +70,10 @@ import {
 } from "../services/subscriptions";
 import { useUserMe } from "../services/user";
 import {
-  workspaceBundleQueryKey,
   type WorkspaceDataBundleResponse,
+  workspaceBundleQueryKey,
 } from "../services/workspace";
+import { SubscriptionSaasCombobox } from "./subscription-saas-combobox";
 
 const intervalOptions: { value: BillingInterval; label: string }[] = [
   { value: "monthly", label: "Monthly" },
@@ -215,9 +216,9 @@ export function ConfigureSubscriptionsPage() {
     Record<string, SubscriptionRow>
   >({});
   const [pendingIds, setPendingIds] = useState<Set<string>>(() => new Set());
-  const [rowErrors, setRowErrors] = useState<
-    Record<string, RowFieldErrors>
-  >({});
+  const [rowErrors, setRowErrors] = useState<Record<string, RowFieldErrors>>(
+    {},
+  );
   const [apiErrorById, setApiErrorById] = useState<Record<string, string>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
   const initialized = useRef(false);
@@ -301,9 +302,7 @@ export function ConfigureSubscriptionsPage() {
       } else {
         const base = baselineById[id];
         if (base) {
-          setRows((prev) =>
-            prev.map((r) => (r.id === id ? { ...base } : r)),
-          );
+          setRows((prev) => prev.map((r) => (r.id === id ? { ...base } : r)));
         }
         setModeById((m) => ({ ...m, [id]: "view" }));
       }
@@ -335,7 +334,7 @@ export function ConfigureSubscriptionsPage() {
         setRowErrors((prev) => ({ ...prev, [id]: errors }));
         return;
       }
-      setRowErrors((prev) => {  
+      setRowErrors((prev) => {
         const next = { ...prev };
         delete next[id];
         return next;
@@ -354,14 +353,13 @@ export function ConfigureSubscriptionsPage() {
             await queryClient.refetchQueries({
               queryKey: workspaceBundleQueryKey(wid),
             });
-            const bundle = queryClient.getQueryData<WorkspaceDataBundleResponse>(
-              workspaceBundleQueryKey(wid),
-            );
+            const bundle =
+              queryClient.getQueryData<WorkspaceDataBundleResponse>(
+                workspaceBundleQueryKey(wid),
+              );
             const saved = bundle?.subscriptions.find((s) => s.id === row.id);
             if (saved) {
-              setRows((prev) =>
-                prev.map((r) => (r.id === id ? saved : r)),
-              );
+              setRows((prev) => prev.map((r) => (r.id === id ? saved : r)));
               setBaselineById((b) => ({ ...b, [saved.id]: { ...saved } }));
             }
           }
@@ -376,9 +374,10 @@ export function ConfigureSubscriptionsPage() {
             await queryClient.refetchQueries({
               queryKey: workspaceBundleQueryKey(wid),
             });
-            const bundle = queryClient.getQueryData<WorkspaceDataBundleResponse>(
-              workspaceBundleQueryKey(wid),
-            );
+            const bundle =
+              queryClient.getQueryData<WorkspaceDataBundleResponse>(
+                workspaceBundleQueryKey(wid),
+              );
             const saved = bundle?.subscriptions.find((s) => s.id === id);
             if (saved) {
               setRows((prev) =>
@@ -404,7 +403,14 @@ export function ConfigureSubscriptionsPage() {
         setSavingId(null);
       }
     },
-    [rows, pendingIds, createMutation, updateMutation, queryClient, me?.workspace?.id],
+    [
+      rows,
+      pendingIds,
+      createMutation,
+      updateMutation,
+      queryClient,
+      me?.workspace?.id,
+    ],
   );
 
   const cancelSubscriptionCard = useCallback(
@@ -422,9 +428,7 @@ export function ConfigureSubscriptionsPage() {
           );
           const saved = bundle?.subscriptions.find((s) => s.id === id);
           if (saved) {
-            setRows((prev) =>
-              prev.map((r) => (r.id === saved.id ? saved : r)),
-            );
+            setRows((prev) => prev.map((r) => (r.id === saved.id ? saved : r)));
             setBaselineById((b) => ({ ...b, [saved.id]: { ...saved } }));
           }
         }
@@ -512,41 +516,38 @@ export function ConfigureSubscriptionsPage() {
         : "Could not load subscriptions."
       : null;
 
-  const ready =
-    subscriptionsQuery.isSuccess && initialized.current;
+  const ready = subscriptionsQuery.isSuccess && initialized.current;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
-        <header className={DASH_STICKY_HEADER}>
-          <div
-            className={
-              DASH_STICKY_HEADER_PAD +
-              " flex flex-wrap items-center justify-between gap-3"
-            }
-          >
-            <div className="flex min-w-0 items-center gap-3">
-              <SidebarTrigger className="-ml-1 md:hidden" />
-              <div className="min-w-0">
-                <p className="text-[0.625rem] font-medium uppercase tracking-wide text-muted-foreground">
-                  Configure
-                </p>
-                <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                  Your subscriptions
-                </h1>
-              </div>
+      <header className={DASH_STICKY_HEADER}>
+        <div
+          className={
+            DASH_STICKY_HEADER_PAD +
+            " flex flex-wrap items-center justify-between gap-3"
+          }
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <SidebarTrigger className="-ml-1 md:hidden" />
+            <div className="min-w-0">
+              <p className="text-[0.625rem] font-medium uppercase tracking-wide text-muted-foreground">
+                Configure
+              </p>
+              <h1 className="text-lg font-semibold tracking-tight text-foreground">
+                Your subscriptions
+              </h1>
             </div>
-            <Link
-              to="/configure"
-              className={cn(
-                buttonVariants({ variant: "outline", size: "sm" }),
-              )}
-            >
-              Back
-            </Link>
           </div>
-        </header>
-        <div className={DASH_SCROLL_CONTENT}>
-          <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-4 sm:p-6">
+          <Link
+            to="/configure"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          >
+            Back
+          </Link>
+        </div>
+      </header>
+      <div className={DASH_SCROLL_CONTENT}>
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-4 sm:p-6">
           <p className="max-w-2xl text-sm text-muted-foreground">
             Add subscriptions one at a time. Each card saves on its own. Saved
             cards stay read-only until you edit.
@@ -582,23 +583,16 @@ export function ConfigureSubscriptionsPage() {
               const baseline = baselineById[row.id];
               const isSaving = savingId === row.id;
               const dirty =
-                isPending ||
-                !baseline ||
-                !rowsContentEqual(row, baseline);
+                isPending || !baseline || !rowsContentEqual(row, baseline);
 
               const validationErr = validateSubscriptionRow(row);
               const invalid = validationErr !== null;
               const saveDisabled =
-                isSaving ||
-                invalid ||
-                (!isPending && !dirty);
+                isSaving || invalid || (!isPending && !dirty);
               const isCancelled = row.status === "cancelled";
 
               return (
-                <Card
-                  key={row.id}
-                  className="border-border/80 shadow-sm"
-                >
+                <Card key={row.id} className="border-border/80 shadow-sm">
                   {mode === "view" ? (
                     <>
                       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3 space-y-0 pb-3">
@@ -637,9 +631,7 @@ export function ConfigureSubscriptionsPage() {
                                 variant="outline"
                                 disabled={isSaving}
                                 aria-label="Cancel"
-                                onClick={() =>
-                                  cancelSubscriptionCard(row.id)
-                                }
+                                onClick={() => cancelSubscriptionCard(row.id)}
                               >
                                 <HugeiconsIcon
                                   icon={Cancel01Icon}
@@ -670,17 +662,13 @@ export function ConfigureSubscriptionsPage() {
                       </CardHeader>
                       <CardContent className="grid gap-3 pt-0 text-sm">
                         <div className="flex flex-wrap justify-between gap-x-6 gap-y-1 border-b border-border/60 pb-3">
-                          <span className="text-muted-foreground">
-                            Amount
-                          </span>
+                          <span className="text-muted-foreground">Amount</span>
                           <span className="font-medium tabular-nums">
                             {row.amount ? `$${row.amount}` : "—"}
                           </span>
                         </div>
                         <div className="flex flex-wrap justify-between gap-x-6 gap-y-1 border-b border-border/60 pb-3">
-                          <span className="text-muted-foreground">
-                            Billing
-                          </span>
+                          <span className="text-muted-foreground">Billing</span>
                           <span>{intervalLabel(row.interval)}</span>
                         </div>
                         <div className="flex flex-wrap justify-between gap-x-6 gap-y-1">
@@ -690,7 +678,7 @@ export function ConfigureSubscriptionsPage() {
                           <span>
                             {row.nextBillingAt
                               ? new Date(
-                                  row.nextBillingAt + "T12:00:00",
+                                  `${row.nextBillingAt}T12:00:00`,
                                 ).toLocaleDateString(undefined, {
                                   month: "short",
                                   day: "numeric",
@@ -727,8 +715,7 @@ export function ConfigureSubscriptionsPage() {
                               type="button"
                               size="icon-sm"
                               disabled={
-                                saveDisabled ||
-                                !subscriptionsQuery.isSuccess
+                                saveDisabled || !subscriptionsQuery.isSuccess
                               }
                               aria-label="Save subscription"
                               onClick={() => saveCard(row.id)}
@@ -785,17 +772,11 @@ export function ConfigureSubscriptionsPage() {
                                 SaaS / product{" "}
                                 <span className="text-destructive">*</span>
                               </FieldLabel>
-                              <Input
+                              <SubscriptionSaasCombobox
                                 id={`sub-name-${row.id}`}
-                                required
-                                placeholder="e.g. Notion, AWS, Spotify"
-                                aria-invalid={err?.name ? true : undefined}
                                 value={row.name}
-                                onChange={(e) =>
-                                  patchRow(row.id, {
-                                    name: e.target.value,
-                                  })
-                                }
+                                hasError={!!err?.name}
+                                onUpdate={(patch) => patchRow(row.id, patch)}
                               />
                               {err?.name ? (
                                 <FieldError>{err.name}</FieldError>

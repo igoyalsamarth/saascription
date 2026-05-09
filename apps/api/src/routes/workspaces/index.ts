@@ -49,7 +49,7 @@ workspacesRouter.post("/", async (c) => {
   if (!userId) {
     return c.json({ error: "Unauthorized" }, 401);
   }
-  const {workspaceName, displayName} = await c.req.json();
+  const { workspaceName, displayName } = await c.req.json();
 
   try {
     const ws = await createWorkspaceForOwner(

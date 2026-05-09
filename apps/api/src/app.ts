@@ -1,9 +1,10 @@
 import { clerkMiddleware } from "@hono/clerk-auth";
 import { Hono } from "hono";
 import { pingDb } from "./db";
+import { saasRouter } from "./routes/saas";
 import { usersRouter } from "./routes/users";
-import { workspacesRouter } from "./routes/workspaces";
 import { webhookRouter } from "./routes/wh/webhook";
+import { workspacesRouter } from "./routes/workspaces";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
@@ -31,6 +32,7 @@ app.post("/queue", async (c) => {
 
 app.use("*", clerkMiddleware());
 
+app.route("/saas", saasRouter);
 app.route("/users", usersRouter);
 app.route("/workspaces", workspacesRouter);
 

@@ -25,6 +25,17 @@ export {
   ChartTooltipContent,
 } from "./components/chart";
 export {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+  CommandShortcut,
+} from "./components/command";
+export {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
