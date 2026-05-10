@@ -21,11 +21,3 @@ export function getSiteUrl(): string {
   }
   return "http://localhost:3000";
 }
-
-/**
- * GA4 measurement ID (`G-XXXXXXXX`). Set `NEXT_PUBLIC_GA_MEASUREMENT_ID` when you want gtag loaded.
- */
-export function getGaMeasurementId(): string | undefined {
-  const id = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
-  return id || undefined;
-}

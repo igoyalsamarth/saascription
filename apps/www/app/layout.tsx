@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { ThemeProvider } from "@/components/theme-provider";
-import { getGaMeasurementId, getSiteUrl } from "@/lib/site";
+import { getSiteUrl } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 import "./globals.css";
@@ -34,8 +34,6 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image" },
 };
 
-const gaMeasurementId = getGaMeasurementId();
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -62,7 +60,7 @@ export default function RootLayout({
         >
           {children}
         </ThemeProvider>
-        {gaMeasurementId ? <GoogleAnalytics gaId={gaMeasurementId} /> : null}
+        <GoogleAnalytics gaId="G-HHJWL006LQ" />
       </body>
     </html>
   );
