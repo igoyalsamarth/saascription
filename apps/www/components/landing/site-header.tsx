@@ -1,6 +1,5 @@
-import { SparklesIcon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { buttonVariants } from "@saascription/ui";
+import Image from "next/image";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/landing/theme-toggle";
 import { appDashSignInUrl, appSignInUrl } from "@/lib/site";
@@ -20,15 +19,17 @@ export function SiteHeader() {
         <div className="relative flex h-14 items-center sm:h-16">
           <Link
             href="/"
-            className="flex items-center gap-2 font-semibold tracking-tight text-foreground"
+            className="flex shrink-0 items-center"
+            aria-label="Saascription home"
           >
-            <span
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground"
-              aria-hidden
-            >
-              <HugeiconsIcon icon={SparklesIcon} size={18} />
-            </span>
-            <span className="hidden sm:inline">Saascription</span>
+            <Image
+              src="/logo.png"
+              alt="Saascription logo"
+              width={800}
+              height={800}
+              className="h-[150px] w-[150px] shrink-0 object-contain"
+              priority
+            />
           </Link>
           <nav
             className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-8 md:flex"
