@@ -1,14 +1,12 @@
 import {
   Alert01Icon,
   Clock01Icon,
-  Notification01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Badge,
   Button,
   cn,
-  SidebarTrigger,
   Table,
   TableBody,
   TableCell,
@@ -35,11 +33,8 @@ import {
   type SubscriptionTableRow,
 } from "@/lib/subscriptions-table";
 import { useWorkspaceSubscriptionsQuery } from "@/services/subscriptions";
-import {
-  DASH_SCROLL_CONTENT,
-  DASH_STICKY_HEADER,
-  DASH_STICKY_HEADER_PAD,
-} from "../lib/dashboard-page-layout";
+import { DashPageHeader } from "./dash-page-header";
+import { DASH_SCROLL_CONTENT } from "../lib/dashboard-page-layout";
 
 const pageSize = 6;
 
@@ -256,43 +251,10 @@ export function SubscriptionsPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
-      <header
-        className={cn(
-          DASH_STICKY_HEADER,
-          "flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between",
-          DASH_STICKY_HEADER_PAD,
-        )}
-      >
-        <div className="flex min-w-0 items-start gap-2 sm:items-center sm:gap-3">
-          <SidebarTrigger className="shrink-0 md:hidden" />
-          <div className="min-w-0">
-            <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-              Subscriptions
-            </h1>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Track renewals, spend, and status
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="relative"
-            aria-label="Notifications"
-          >
-            <HugeiconsIcon
-              icon={Notification01Icon}
-              className="size-4 text-foreground"
-            />
-            <span
-              className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-primary ring-2 ring-background"
-              aria-hidden
-            />
-          </Button>
-        </div>
-      </header>
+      <DashPageHeader
+        title="Subscriptions"
+        description="Track renewals, spend, and status"
+      />
 
       <div
         className={cn(

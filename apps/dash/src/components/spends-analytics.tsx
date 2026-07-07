@@ -1,7 +1,6 @@
 import {
   ArrowRight01Icon,
   CloudIcon,
-  Notification01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -17,7 +16,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
   cn,
-  SidebarTrigger,
 } from "@saascription/ui";
 import { useMemo } from "react";
 import {
@@ -31,17 +29,16 @@ import {
   XAxis,
 } from "recharts";
 import {
-  type SpendsAnalytics,
+  type SpendsAnalytics as SpendsAnalyticsData,
   type SpendsHighestRow,
   type SpendsMonthsWindow,
   type SpendsOpportunity,
   useSpendsAnalytics,
 } from "@/services/spends";
 
+import { DashPageHeader } from "./dash-page-header";
 import {
   DASH_SCROLL_CONTENT,
-  DASH_STICKY_HEADER,
-  DASH_STICKY_HEADER_PAD,
 } from "../lib/dashboard-page-layout";
 
 function formatSpendCompactUsd(n: number): string {
@@ -118,43 +115,10 @@ export function SpendsAnalytics() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
-      <header
-        className={cn(
-          DASH_STICKY_HEADER,
-          "flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between",
-          DASH_STICKY_HEADER_PAD,
-        )}
-      >
-        <div className="flex min-w-0 items-start gap-2 sm:items-center sm:gap-3">
-          <SidebarTrigger className="shrink-0 md:hidden" />
-          <div className="min-w-0">
-            <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-              Spends &amp; analytics
-            </h1>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Track your monthly expenses and AI-driven savings
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="relative"
-            aria-label="Notifications"
-          >
-            <HugeiconsIcon
-              icon={Notification01Icon}
-              className="size-4 text-foreground"
-            />
-            <span
-              className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-primary ring-2 ring-background"
-              aria-hidden
-            />
-          </Button>
-        </div>
-      </header>
+      <DashPageHeader
+        title="Spends & analytics"
+        description="Track your monthly expenses and AI-driven savings"
+      />
 
       <div
         className={cn(
@@ -317,7 +281,7 @@ export function SpendsAnalytics() {
                         paddingAngle={1}
                       >
                         {categoryDonut.map(
-                          (entry: SpendsAnalytics["categoryBreakdown"][number]) => (
+                          (entry: SpendsAnalyticsData["categoryBreakdown"][number]) => (
                             <Cell
                               key={entry.name}
                               fill={`var(--color-${entry.key})`}
@@ -371,7 +335,7 @@ export function SpendsAnalytics() {
                   </ChartContainer>
                   <ul className="w-full min-w-0 space-y-2.5 text-xs sm:max-w-52">
                     {categoryDonut.map(
-                      (c: SpendsAnalytics["categoryBreakdown"][number]) => (
+                      (c: SpendsAnalyticsData["categoryBreakdown"][number]) => (
                       <li
                         key={c.name}
                         className="flex items-center justify-between gap-2"

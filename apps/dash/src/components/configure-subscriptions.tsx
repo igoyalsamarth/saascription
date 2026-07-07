@@ -31,7 +31,6 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-  SidebarTrigger,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -47,11 +46,8 @@ import {
   useRef,
   useState,
 } from "react";
-import {
-  DASH_SCROLL_CONTENT,
-  DASH_STICKY_HEADER,
-  DASH_STICKY_HEADER_PAD,
-} from "../lib/dashboard-page-layout";
+import { DashPageHeader } from "./dash-page-header";
+import { DASH_SCROLL_CONTENT } from "../lib/dashboard-page-layout";
 import {
   type BillingInterval,
   emptySubscriptionRow,
@@ -520,32 +516,20 @@ export function ConfigureSubscriptionsPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
-      <header className={DASH_STICKY_HEADER}>
-        <div
-          className={
-            DASH_STICKY_HEADER_PAD +
-            " flex flex-wrap items-center justify-between gap-3"
-          }
-        >
-          <div className="flex min-w-0 items-center gap-3">
-            <SidebarTrigger className="-ml-1 md:hidden" />
-            <div className="min-w-0">
-              <p className="text-[0.625rem] font-medium uppercase tracking-wide text-muted-foreground">
-                Configure
-              </p>
-              <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                Your subscriptions
-              </h1>
-            </div>
-          </div>
+      <DashPageHeader
+        eyebrow="Configure"
+        title="Your subscriptions"
+        showNotificationBell={false}
+        sidebarTriggerClassName="-ml-1 md:hidden"
+        actions={
           <Link
             to="/configure"
             className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
           >
             Back
           </Link>
-        </div>
-      </header>
+        }
+      />
       <div className={DASH_SCROLL_CONTENT}>
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-4 sm:p-6">
           <p className="max-w-2xl text-sm text-muted-foreground">

@@ -4,7 +4,6 @@ import {
   ArrowLeft01Icon,
   ArrowRight01Icon,
   MoreHorizontalIcon,
-  Notification01Icon,
   ShoppingBag01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -22,7 +21,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  SidebarTrigger,
 } from "@saascription/ui";
 import { useCallback, useMemo, useState } from "react";
 import { renewalsToCalendarEvents } from "@/lib/calendar-render";
@@ -39,11 +37,8 @@ import {
 } from "@/lib/calendar-utils";
 import { useCalendarRenewals } from "@/services/calendar";
 import type { CalendarViewMode } from "../lib/calendar-types";
-import {
-  DASH_SCROLL_CONTENT,
-  DASH_STICKY_HEADER,
-  DASH_STICKY_HEADER_PAD,
-} from "../lib/dashboard-page-layout";
+import { DashPageHeader } from "./dash-page-header";
+import { DASH_SCROLL_CONTENT } from "../lib/dashboard-page-layout";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
@@ -211,102 +206,71 @@ export function CalendarPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
-      <header
-        className={cn(
-          DASH_STICKY_HEADER,
-          "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4",
-          DASH_STICKY_HEADER_PAD,
-        )}
-      >
-        <div className="flex min-w-0 items-start gap-2 sm:items-center sm:gap-3">
-          <SidebarTrigger className="shrink-0 md:hidden" />
-          <div className="min-w-0">
-            <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-              Subscription Calendar
-            </h1>
-          </div>
-        </div>
-
-        <div className="flex flex-1 flex-col flex-wrap items-stretch justify-end gap-2 sm:max-w-3xl sm:flex-row sm:items-center sm:gap-3">
-          <div className="flex items-center justify-center gap-1 sm:min-w-0 sm:flex-1 sm:justify-center">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              className="shrink-0"
-              onClick={goPrev}
-              aria-label="Previous"
-            >
-              <HugeiconsIcon
-                icon={ArrowLeft01Icon}
-                className="size-3.5 text-foreground"
-              />
-            </Button>
-            <span className="min-w-0 truncate text-center text-xs font-medium text-foreground sm:px-2">
-              {headerLabel}
-            </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              className="shrink-0"
-              onClick={goNext}
-              aria-label="Next"
-            >
-              <HugeiconsIcon
-                icon={ArrowRight01Icon}
-                className="size-3.5 text-foreground"
-              />
-            </Button>
-          </div>
-
-          <div className="flex shrink-0 items-center justify-center gap-0.5 rounded-md border border-border/80 bg-muted/40 p-0.5">
-            {(
-              [
-                ["month", "Month"],
-                ["week", "Week"],
-                ["list", "List"],
-              ] as const
-            ).map(([id, label]) => (
-              <button
-                key={id}
+      <DashPageHeader
+        title="Subscription Calendar"
+        below={
+          <div className="flex flex-col flex-wrap items-stretch justify-end gap-2 sm:max-w-3xl sm:flex-row sm:items-center sm:gap-3 sm:ml-auto">
+            <div className="flex items-center justify-center gap-1 sm:min-w-0 sm:flex-1 sm:justify-center">
+              <Button
                 type="button"
-                onClick={() => {
-                  onViewChange(id);
-                }}
-                className={cn(
-                  buttonVariants({ variant: "ghost", size: "sm" }),
-                  "h-6 rounded-sm px-2.5 text-[0.625rem]",
-                  view === id
-                    ? "bg-background text-foreground shadow-sm dark:bg-input/50"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
+                variant="ghost"
+                size="icon-sm"
+                className="shrink-0"
+                onClick={goPrev}
+                aria-label="Previous"
               >
-                {label}
-              </button>
-            ))}
-          </div>
+                <HugeiconsIcon
+                  icon={ArrowLeft01Icon}
+                  className="size-3.5 text-foreground"
+                />
+              </Button>
+              <span className="min-w-0 truncate text-center text-xs font-medium text-foreground sm:px-2">
+                {headerLabel}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="shrink-0"
+                onClick={goNext}
+                aria-label="Next"
+              >
+                <HugeiconsIcon
+                  icon={ArrowRight01Icon}
+                  className="size-3.5 text-foreground"
+                />
+              </Button>
+            </div>
 
-          <div className="flex shrink-0 items-center justify-end gap-1">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="relative"
-              aria-label="Notifications"
-            >
-              <HugeiconsIcon
-                icon={Notification01Icon}
-                className="size-4 text-foreground"
-              />
-              <span
-                className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-primary ring-2 ring-background"
-                aria-hidden
-              />
-            </Button>
+            <div className="flex shrink-0 items-center justify-center gap-0.5 rounded-md border border-border/80 bg-muted/40 p-0.5">
+              {(
+                [
+                  ["month", "Month"],
+                  ["week", "Week"],
+                  ["list", "List"],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => {
+                    onViewChange(id);
+                  }}
+                  className={cn(
+                    buttonVariants({ variant: "ghost", size: "sm" }),
+                    "h-6 rounded-sm px-2.5 text-[0.625rem]",
+                    view === id
+                      ? "bg-background text-foreground shadow-sm dark:bg-input/50"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      </header>
+        }
+      />
 
       <div className={cn(DASH_SCROLL_CONTENT, "p-4 sm:p-6")}>
         <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6 lg:flex-row lg:items-start">

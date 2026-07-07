@@ -10,39 +10,21 @@ import {
   CardHeader,
   CardTitle,
   cn,
-  SidebarTrigger,
 } from "@saascription/ui";
 import { Link } from "@tanstack/react-router";
 
-import {
-  DASH_SCROLL_CONTENT,
-  DASH_STICKY_HEADER,
-  DASH_STICKY_HEADER_PAD,
-} from "../lib/dashboard-page-layout";
+import { DashPageHeader } from "./dash-page-header";
+import { DASH_SCROLL_CONTENT } from "../lib/dashboard-page-layout";
 
 export function ConfigureHubPage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
-      <header className={DASH_STICKY_HEADER}>
-        <div
-          className={
-            DASH_STICKY_HEADER_PAD +
-            " flex flex-wrap items-center justify-between gap-3"
-          }
-        >
-          <div className="flex min-w-0 items-center gap-3">
-            <SidebarTrigger className="-ml-1 md:hidden" />
-            <div className="min-w-0">
-              <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                Configure subscriptions
-              </h1>
-              <p className="text-xs text-muted-foreground">
-                Choose how your subscription list is populated.
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
+      <DashPageHeader
+        title="Configure subscriptions"
+        description="Choose how your subscription list is populated."
+        showNotificationBell={false}
+        sidebarTriggerClassName="-ml-1 md:hidden"
+      />
       <div className={DASH_SCROLL_CONTENT}>
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4 sm:p-6">
           <div className="grid gap-4 sm:grid-cols-2 sm:items-stretch">

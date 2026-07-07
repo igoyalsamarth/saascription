@@ -8,7 +8,6 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Badge,
-  Button,
   buttonVariants,
   Card,
   CardContent,
@@ -25,7 +24,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  SidebarTrigger,
 } from "@saascription/ui";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
@@ -38,12 +36,14 @@ import {
   PieChart,
   XAxis,
 } from "recharts";
-import { useDashboardOverview, type DashboardOverview } from "@/services/dashboard";
+import {
+  type DashboardOverview as DashboardOverviewData,
+  useDashboardOverview,
+} from "@/services/dashboard";
 
+import { DashPageHeader } from "./dash-page-header";
 import {
   DASH_SCROLL_CONTENT,
-  DASH_STICKY_HEADER,
-  DASH_STICKY_HEADER_PAD,
 } from "../lib/dashboard-page-layout";
 
 const usdWhole = new Intl.NumberFormat("en-US", {
@@ -104,43 +104,10 @@ export function DashboardOverview() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
-      <header
-        className={cn(
-          DASH_STICKY_HEADER,
-          "flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between",
-          DASH_STICKY_HEADER_PAD,
-        )}
-      >
-        <div className="flex min-w-0 items-start gap-2 sm:items-center sm:gap-3">
-          <SidebarTrigger className="shrink-0 md:hidden" />
-          <div className="min-w-0">
-            <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-              Dashboard overview
-            </h1>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Your subscription ecosystem at a glance
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="relative"
-            aria-label="Notifications"
-          >
-            <HugeiconsIcon
-              icon={Notification01Icon}
-              className="size-4 text-foreground"
-            />
-            <span
-              className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-primary ring-2 ring-background"
-              aria-hidden
-            />
-          </Button>
-        </div>
-      </header>
+      <DashPageHeader
+        title="Dashboard overview"
+        description="Your subscription ecosystem at a glance"
+      />
 
       <div
         className={cn(
@@ -317,7 +284,7 @@ export function DashboardOverview() {
                 </p>
               ) : (
                 dashboard.upcomingRenewals.map(
-                  (r: DashboardOverview["upcomingRenewals"][number]) => (
+                  (r: DashboardOverviewData["upcomingRenewals"][number]) => (
                   <div
                     key={r.id}
                     className="flex items-center justify-between gap-2 border-b border-border/60 py-3 last:border-b-0"
@@ -397,7 +364,7 @@ export function DashboardOverview() {
                         paddingAngle={1}
                       >
                         {categoryData.map(
-                          (entry: DashboardOverview["categoryBreakdown"][number]) => (
+                          (entry: DashboardOverviewData["categoryBreakdown"][number]) => (
                             <Cell
                               key={entry.name}
                               fill={`var(--color-${entry.key})`}
@@ -410,7 +377,7 @@ export function DashboardOverview() {
                   </ChartContainer>
                   <ul className="w-full min-w-0 space-y-2 text-xs sm:max-w-48">
                     {categoryData.map(
-                      (c: DashboardOverview["categoryBreakdown"][number]) => (
+                      (c: DashboardOverviewData["categoryBreakdown"][number]) => (
                       <li
                         key={c.name}
                         className="flex items-center justify-between gap-2"
