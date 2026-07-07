@@ -4,7 +4,6 @@ import {
   CloudIcon,
   KanbanIcon,
   MailSend01Icon,
-  Notification01Icon,
   Search01Icon,
   Settings01Icon,
   SlackIcon,
@@ -26,16 +25,12 @@ import {
   ChartTooltipContent,
   cn,
   Input,
-  SidebarTrigger,
 } from "@saascription/ui";
 import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts";
 
-import {
-  DASH_SCROLL_CONTENT,
-  DASH_STICKY_HEADER,
-  DASH_STICKY_HEADER_PAD,
-} from "../lib/dashboard-page-layout";
+import { DashPageHeader } from "./dash-page-header";
+import { DASH_SCROLL_CONTENT } from "../lib/dashboard-page-layout";
 
 const USER_MESSAGE_CLASS =
   "rounded-2xl border border-primary/20 bg-primary/10 px-4 py-2.5 text-sm text-foreground";
@@ -108,52 +103,19 @@ export function AiOptimizationPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
-      <header
-        className={cn(
-          DASH_STICKY_HEADER,
-          "flex w-full items-start justify-between gap-3 sm:items-center",
-          DASH_STICKY_HEADER_PAD,
-        )}
-      >
-        <div className="flex min-w-0 items-start gap-2 sm:items-center sm:gap-3">
-          <SidebarTrigger className="shrink-0 md:hidden" />
-          <div className="min-w-0">
-            <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-              AI optimization assistant
-            </h1>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Ask your personal AI about spending, tools, and savings
-            </p>
-          </div>
-        </div>
-        <div className="ml-auto flex shrink-0 items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="relative"
-            aria-label="Notifications"
-          >
-            <HugeiconsIcon
-              icon={Notification01Icon}
-              className="size-4 text-foreground"
-            />
-            <span
-              className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-primary ring-2 ring-background"
-              aria-hidden
-            />
-          </Button>
-        </div>
-      </header>
+      <DashPageHeader
+        title="AI optimization assistant"
+        description="Ask your personal AI about spending, tools, and savings"
+      />
 
       <div className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-0 overflow-hidden lg:max-w-[min(100%,100rem)] lg:flex-row">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-          <div className="shrink-0 border-b border-border bg-background px-4 py-3 sm:px-6">
+          <div className="shrink-0 border-b border-border bg-background px-4 py-2.5 sm:px-6 sm:py-3">
             <div className="mx-auto max-w-3xl">
-              <p className="mb-2 text-[0.625rem] font-medium tracking-wide text-muted-foreground uppercase">
+              <p className="mb-1.5 text-[0.625rem] font-medium tracking-wide text-muted-foreground uppercase sm:mb-2">
                 Suggested
               </p>
-              <div className="grid gap-2 sm:grid-cols-3">
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                 {suggestions.map((s) => (
                   <button
                     key={s.title}
@@ -168,17 +130,17 @@ export function AiOptimizationPage() {
                     }}
                   >
                     <Card className="h-full transition-shadow hover:shadow-md">
-                      <CardHeader className="space-y-0 pb-1.5 pt-3">
-                        <div className="mb-1.5 flex size-8 items-center justify-center rounded-md border border-border bg-muted/50">
+                      <CardHeader className="space-y-0 p-2 pb-1.5 sm:p-3 sm:pb-1.5 sm:pt-3">
+                        <div className="mb-1 flex size-6 items-center justify-center rounded-md border border-border bg-muted/50 sm:mb-1.5 sm:size-8">
                           <HugeiconsIcon
                             icon={s.icon}
-                            className="size-3.5 text-foreground"
+                            className="size-3 text-foreground sm:size-3.5"
                           />
                         </div>
-                        <CardTitle className="text-xs font-medium leading-tight">
+                        <CardTitle className="text-[0.625rem] font-medium leading-tight sm:text-xs">
                           {s.title}
                         </CardTitle>
-                        <CardDescription className="text-[0.625rem] leading-snug">
+                        <CardDescription className="text-[0.5625rem] leading-snug sm:text-[0.625rem]">
                           {s.description}
                         </CardDescription>
                       </CardHeader>
