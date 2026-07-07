@@ -17,6 +17,12 @@
       "RESEND_API_KEY"
     ]
   },
+  "observability": {
+    "logs": {
+      "enabled": false,
+      "invocation_logs": true
+    }
+  },
   "triggers": {
     "crons": ["0 8 * * *"]
   },
