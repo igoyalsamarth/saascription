@@ -33,12 +33,15 @@ import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts";
 
 import {
   DASH_SCROLL_CONTENT,
+  DASH_STICKY_HEADER,
   DASH_STICKY_HEADER_PAD,
 } from "../lib/dashboard-page-layout";
 
-/** Sticky top row on AI: glass, not a solid opaque bar (avoids a “box” over the thread). */
-const AI_STICKY_HEADER =
-  "sticky top-0 z-20 border-b border-border/40 bg-transparent shadow-none backdrop-blur-md supports-[backdrop-filter]:bg-background/35";
+const USER_MESSAGE_CLASS =
+  "rounded-2xl border border-primary/20 bg-primary/10 px-4 py-2.5 text-sm text-foreground";
+
+const ASSISTANT_MESSAGE_CLASS =
+  "min-w-0 space-y-3 rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground shadow-sm";
 
 const suggestions = [
   {
@@ -68,7 +71,7 @@ const barData = [
 ] as const;
 
 const barConfig: ChartConfig = {
-  value: { label: "Spend", color: "hsl(var(--primary))" },
+  value: { label: "Spend", color: "var(--color-chart-1)" },
 } satisfies ChartConfig;
 
 const serviceCompare = [
@@ -83,7 +86,7 @@ const serviceCompare = [
     ],
     under: "$42",
     icon: KanbanIcon,
-    iconClass: "text-sky-600",
+    iconClass: "text-chart-2",
   },
   {
     name: "ClickUp",
@@ -96,7 +99,7 @@ const serviceCompare = [
     ],
     under: "$31",
     icon: TaskDone01Icon,
-    iconClass: "text-violet-600",
+    iconClass: "text-chart-4",
   },
 ] as const;
 
@@ -104,10 +107,10 @@ export function AiOptimizationPage() {
   const [input, setInput] = useState("");
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col bg-[linear-gradient(to_top,rgb(0,0,0),var(--background)_100%)]">
+    <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
       <header
         className={cn(
-          AI_STICKY_HEADER,
+          DASH_STICKY_HEADER,
           "flex w-full items-start justify-between gap-3 sm:items-center",
           DASH_STICKY_HEADER_PAD,
         )}
@@ -145,7 +148,7 @@ export function AiOptimizationPage() {
 
       <div className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-0 overflow-hidden lg:max-w-[min(100%,100rem)] lg:flex-row">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-          <div className="shrink-0 border-b border-border/60 bg-transparent px-4 py-3 sm:px-6">
+          <div className="shrink-0 border-b border-border bg-background px-4 py-3 sm:px-6">
             <div className="mx-auto max-w-3xl">
               <p className="mb-2 text-[0.625rem] font-medium tracking-wide text-muted-foreground uppercase">
                 Suggested
@@ -164,9 +167,9 @@ export function AiOptimizationPage() {
                       );
                     }}
                   >
-                    <Card className="h-full border-border/60 bg-background/25 backdrop-blur-sm transition-shadow hover:shadow-md">
+                    <Card className="h-full transition-shadow hover:shadow-md">
                       <CardHeader className="space-y-0 pb-1.5 pt-3">
-                        <div className="mb-1.5 flex size-8 items-center justify-center rounded-md border border-border/60 bg-muted/50">
+                        <div className="mb-1.5 flex size-8 items-center justify-center rounded-md border border-border bg-muted/50">
                           <HugeiconsIcon
                             icon={s.icon}
                             className="size-3.5 text-foreground"
@@ -187,13 +190,15 @@ export function AiOptimizationPage() {
           </div>
 
           <div
-            className={cn(
-              DASH_SCROLL_CONTENT,
-              "bg-transparent px-4 py-4 sm:px-6",
-            )}
+            className={cn(DASH_SCROLL_CONTENT, "px-4 py-4 sm:px-6")}
           >
             <div className="mx-auto flex max-w-3xl flex-col gap-6">
-              <div className="ml-auto max-w-[min(100%,32rem)] rounded-2xl border border-primary/20 bg-emerald-50/90 px-4 py-2.5 text-sm text-foreground dark:border-primary/15 dark:bg-emerald-950/35">
+              <div
+                className={cn(
+                  "ml-auto max-w-[min(100%,32rem)]",
+                  USER_MESSAGE_CLASS,
+                )}
+              >
                 Show me a breakdown of my 2023 spend
               </div>
 
@@ -204,7 +209,7 @@ export function AiOptimizationPage() {
                     className="size-3.5"
                   />
                 </div>
-                <div className="min-w-0 space-y-3 rounded-2xl border border-border/60 bg-background/20 px-4 py-3 text-sm text-foreground shadow-sm backdrop-blur-sm">
+                <div className={ASSISTANT_MESSAGE_CLASS}>
                   <p className="text-muted-foreground">
                     Here’s your 2023 spend by month. December was your peak at
                     about{" "}
@@ -212,7 +217,7 @@ export function AiOptimizationPage() {
                     — mostly from infrastructure and design tools. The trend is
                     up <span className="text-primary">~12% vs. mid-year</span>.
                   </p>
-                  <div className="h-px w-full bg-border/60" />
+                  <div className="h-px w-full bg-border" />
                   <p className="text-xs font-medium text-foreground">
                     Monthly spend
                   </p>
@@ -274,7 +279,12 @@ export function AiOptimizationPage() {
                 </div>
               </div>
 
-              <div className="ml-auto max-w-[min(100%,32rem)] rounded-2xl border border-primary/20 bg-emerald-50/90 px-4 py-2.5 text-sm text-foreground dark:border-primary/15 dark:bg-emerald-950/35">
+              <div
+                className={cn(
+                  "ml-auto max-w-[min(100%,32rem)]",
+                  USER_MESSAGE_CLASS,
+                )}
+              >
                 Compare Trello and ClickUp for our team
               </div>
 
@@ -292,13 +302,10 @@ export function AiOptimizationPage() {
                   </p>
                   <div className="grid gap-2 sm:grid-cols-2">
                     {serviceCompare.map((svc) => (
-                      <Card
-                        key={svc.name}
-                        className="border-border/60 bg-background/25 shadow-sm backdrop-blur-sm"
-                      >
+                      <Card key={svc.name}>
                         <CardHeader className="space-y-1 pb-2">
                           <div className="flex items-center gap-2">
-                            <span className="flex size-7 items-center justify-center rounded-md border border-border/60 bg-muted/40">
+                            <span className="flex size-7 items-center justify-center rounded-md border border-border bg-muted/50">
                               <HugeiconsIcon
                                 icon={svc.icon}
                                 className={cn("size-3.5", svc.iconClass)}
@@ -321,7 +328,7 @@ export function AiOptimizationPage() {
                             ))}
                           </ul>
                         </CardContent>
-                        <CardFooter className="border-t border-border/50 pt-2 text-[0.625rem] font-medium text-primary">
+                        <CardFooter className="border-t border-border pt-2 text-[0.625rem] font-medium text-primary">
                           Under budget (${svc.under} left)
                         </CardFooter>
                       </Card>
@@ -332,9 +339,9 @@ export function AiOptimizationPage() {
             </div>
           </div>
 
-          <div className="sticky bottom-0 z-10 shrink-0 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:px-6">
+          <div className="sticky bottom-0 z-10 shrink-0 border-t border-border bg-background/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md supports-[backdrop-filter]:bg-background/90 sm:px-6">
             <div className="mx-auto max-w-3xl space-y-2">
-              <div className="flex items-center gap-2 rounded-full border border-border/50 bg-background/20 px-2 py-1.5 shadow-sm backdrop-blur-sm">
+              <div className="flex items-center gap-2 rounded-full border border-border bg-card px-2 py-1.5 shadow-sm">
                 <span className="flex size-8 shrink-0 items-center justify-center text-muted-foreground">
                   <HugeiconsIcon
                     icon={ArtificialIntelligence01Icon}
@@ -374,8 +381,8 @@ export function AiOptimizationPage() {
           </div>
         </div>
 
-        <aside className="hidden min-h-0 w-72 shrink-0 border-l border-border/40 bg-background/15 backdrop-blur-sm lg:flex lg:flex-col">
-          <div className="border-b border-border/60 p-4">
+        <aside className="hidden min-h-0 w-72 shrink-0 border-l border-border bg-card lg:flex lg:flex-col">
+          <div className="border-b border-border p-4">
             <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground">
               <span className="text-primary">
                 <HugeiconsIcon
@@ -387,13 +394,13 @@ export function AiOptimizationPage() {
             </p>
           </div>
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3 [scrollbar-width:none] [&::-webkit-scrollbar]:h-0 [&::-webkit-scrollbar]:w-0 [-ms-overflow-style:none]">
-            <Card className="border-primary/20 bg-linear-to-br from-primary/8 via-primary/4 to-emerald-500/10 shadow-sm">
+            <Card className="border-primary/20 bg-linear-to-br from-primary/8 via-primary/4 to-chart-1/10 shadow-sm">
               <CardContent className="space-y-3 p-4">
                 <div className="flex items-start gap-2">
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/80 dark:bg-card">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-muted">
                     <HugeiconsIcon
                       icon={SlackIcon}
-                      className="size-4 text-[#4A154B]"
+                      className="size-4 text-foreground"
                     />
                   </span>
                   <p className="text-sm leading-relaxed text-foreground">
@@ -420,7 +427,7 @@ export function AiOptimizationPage() {
           type="button"
           variant="secondary"
           size="icon"
-          className="size-9 rounded-full border border-border/60 shadow-md"
+          className="size-9 rounded-full shadow-md"
           aria-label="AI settings"
         >
           <HugeiconsIcon
