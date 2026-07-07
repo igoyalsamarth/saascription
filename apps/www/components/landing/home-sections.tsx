@@ -16,7 +16,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { buttonVariants } from "@saascription/ui";
 import Link from "next/link";
-import { appSignInUrl } from "@/lib/site";
+import { appSignInUrl, pricingContactMailtoUrl } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 function DashboardOverviewMock() {
@@ -552,7 +552,7 @@ export function HomeLandingSections() {
                   ))}
                 </ul>
                 <Link
-                  href={appSignInUrl}
+                  href={pricingContactMailtoUrl}
                   className={cn(
                     buttonVariants({
                       variant: plan.highlight ? "default" : "outline",
