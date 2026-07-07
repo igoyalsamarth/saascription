@@ -24,7 +24,7 @@
     }
   },
   "triggers": {
-    "crons": ["*/5 * * * *"]
+    "crons": ["0 8 * * *"]
   },
   "d1_databases": [
     {
