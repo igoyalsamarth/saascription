@@ -2,6 +2,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 
 import { app } from "./app";
+import { handleReminderQueue } from "./reminders/consumer";
+import { handleReminderScheduled } from "./reminders/scheduled";
 
 const root = new Hono<{ Bindings: CloudflareBindings }>();
 
@@ -22,4 +24,8 @@ root.route("/api/v1", app);
 
 root.notFound((c) => c.json({ error: "Not Found" }, 404));
 
-export default root;
+export default {
+  fetch: root.fetch,
+  scheduled: handleReminderScheduled,
+  queue: handleReminderQueue,
+};

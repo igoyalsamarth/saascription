@@ -4,6 +4,7 @@
 #   CLOUDFLARE_API_TOKEN   — API token with Workers Scripts:Edit, D1, Queues as needed
 #   CLOUDFLARE_ACCOUNT_ID  — Workers dashboard → account id
 #   CLERK_WEBHOOK_SIGNING_SECRET — required by wrangler.jsonc secrets.required (Clerk whsec_…)
+#   RESEND_API_KEY — Resend API key for subscription reminder emails
 
 
 name: Deploy API
@@ -47,7 +48,9 @@ jobs:
             CLERK_WEBHOOK_SIGNING_SECRET
             CLERK_SECRET_KEY
             CLERK_PUBLISHABLE_KEY
+            RESEND_API_KEY
         env:
           CLERK_WEBHOOK_SIGNING_SECRET: ${{ secrets.CLERK_WEBHOOK_SIGNING_SECRET }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
           CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}

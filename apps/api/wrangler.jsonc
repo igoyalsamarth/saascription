@@ -13,15 +13,20 @@
     "required": [
       "CLERK_WEBHOOK_SIGNING_SECRET",
       "CLERK_SECRET_KEY",
-      "CLERK_PUBLISHABLE_KEY"
+      "CLERK_PUBLISHABLE_KEY",
+      "RESEND_API_KEY"
     ]
+  },
+  "triggers": {
+    "crons": ["0 8 * * *"]
   },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "saascription",
       "database_id": "2674de39-aadc-437b-a0cb-e0cabf752865",
-      "remote": true
+      "remote": true,
+      "migrations_dir": "db/migrations"
     }
   ],
   "queues": {
@@ -29,6 +34,13 @@
       {
         "binding": "QUEUE",
         "queue": "saascription"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "saascription",
+        "max_batch_size": 10,
+        "max_retries": 3
       }
     ]
   }
