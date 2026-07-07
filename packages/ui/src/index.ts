@@ -84,6 +84,7 @@ export {
   SidebarProvider,
   SidebarSeparator,
   SidebarTrigger,
+  useSidebar,
 } from "./components/sidebar";
 export { Skeleton } from "./components/skeleton";
 export {

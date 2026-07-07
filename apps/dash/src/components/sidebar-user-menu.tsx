@@ -16,6 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  useSidebar,
 } from "@saascription/ui";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -41,6 +42,7 @@ function initialsFromProfile(user: UserMe | undefined): string {
 export function SidebarUserMenu() {
   const { signOut } = useClerk();
   const navigate = useNavigate();
+  const { isMobile, setOpenMobile } = useSidebar();
   const { data: me, isPending, isError } = useUserMe();
   const user = me?.user;
 
@@ -83,6 +85,9 @@ export function SidebarUserMenu() {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={() => {
+              if (isMobile) {
+                setOpenMobile(false);
+              }
               void navigate({ to: "/settings" });
             }}
           >
