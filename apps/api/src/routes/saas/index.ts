@@ -5,6 +5,7 @@ const saasRouter = new Hono<{ Bindings: CloudflareBindings }>();
 
 /**
  * Global SaaS catalog search (any signed-in user). Optional `query` — short or empty returns [].
+ * Only catalog rows with a website or icon URL are returned.
  */
 saasRouter.get("/all", async (c) => {
 

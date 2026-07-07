@@ -13,8 +13,14 @@ function sanitizeLikeLiteralFragment(raw: string): string {
   return raw.replace(/[%_\\]/g, "");
 }
 
+const SAAS_CATALOG_HAS_LINK_SQL = `(
+  (website_url IS NOT NULL AND TRIM(website_url) != '')
+  OR (icon_url IS NOT NULL AND TRIM(icon_url) != '')
+)`;
+
 /**
  * Prefix/substring search on catalog names (case-insensitive). Empty or short queries return [].
+ * Only rows with a website or icon URL are included so suggestions are display-ready.
  */
 export async function searchSaasCatalogByName(
   db: D1Database,
@@ -33,6 +39,7 @@ export async function searchSaasCatalogByName(
     .prepare(
       `SELECT id, name FROM saas
        WHERE LOWER(name) LIKE LOWER(?)
+         AND ${SAAS_CATALOG_HAS_LINK_SQL}
        ORDER BY
          CASE WHEN LOWER(name) = LOWER(?) THEN 0 ELSE 1 END,
          LENGTH(name),
