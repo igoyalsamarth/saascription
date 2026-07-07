@@ -11,6 +11,7 @@ declare namespace Cloudflare {
 		CLERK_WEBHOOK_SIGNING_SECRET: string;
 		CLERK_SECRET_KEY: string;
 		CLERK_PUBLISHABLE_KEY: string;
+		RESEND_API_KEY: string;
 	}
 }
 interface CloudflareBindings extends Cloudflare.Env {}

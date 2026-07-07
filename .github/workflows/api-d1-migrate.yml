@@ -1,0 +1,44 @@
+# Apply D1 migrations when files under apps/api/db/migrations change.
+#
+# GitHub repo → Settings → Secrets and variables → Actions:
+#   CLOUDFLARE_API_TOKEN  — API token with D1:Edit
+#   CLOUDFLARE_ACCOUNT_ID — Workers dashboard → account id
+
+name: D1 Migrations
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/api/db/migrations/**"
+      - "apps/api/wrangler.jsonc"
+      - "bun.lock"
+  workflow_dispatch:
+
+concurrency:
+  group: d1-migrate-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.6
+
+      - name: Install monorepo dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Apply D1 migrations (remote)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/api
+          packageManager: bun
+          command: d1 migrations apply saascription --remote
