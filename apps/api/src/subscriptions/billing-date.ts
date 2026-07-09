@@ -11,7 +11,11 @@ function formatIsoDate(year: number, month: number, day: number): string {
   return `${y}-${m}-${d}`;
 }
 
-function parseIsoDate(iso: string): { year: number; month: number; day: number } {
+function parseIsoDate(iso: string): {
+  year: number;
+  month: number;
+  day: number;
+} {
   const [year, month, day] = iso.split("-").map(Number);
   return { year, month, day };
 }

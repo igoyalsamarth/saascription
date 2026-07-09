@@ -61,7 +61,7 @@ function isValidIsoDate(s: string): boolean {
   if (m < 1 || m > 12 || d < 1 || d > 31) {
     return false;
   }
-  const dt = new Date(s.trim() + "T12:00:00");
+  const dt = new Date(`${s.trim()}T12:00:00`);
   return (
     Number.isFinite(dt.getTime()) &&
     dt.getFullYear() === y &&

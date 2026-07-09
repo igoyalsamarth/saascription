@@ -46,6 +46,12 @@
       "assist": { "enabled": false }
     },
     {
+      "includes": ["**/worker-configuration.d.ts"],
+      "linter": { "enabled": false },
+      "formatter": { "enabled": false },
+      "assist": { "enabled": false }
+    },
+    {
       "includes": ["apps/www/**"],
       "linter": {
         "domains": {

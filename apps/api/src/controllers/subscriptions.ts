@@ -65,9 +65,7 @@ function costCentsToAmountString(cost: number | null): string {
   return Number.isInteger(dollars) ? String(dollars) : dollars.toFixed(2);
 }
 
-function parseInterval(
-  v: unknown,
-): "monthly" | "yearly" | "custom" | null {
+function parseInterval(v: unknown): "monthly" | "yearly" | "custom" | null {
   if (v === "monthly" || v === "yearly" || v === "custom") {
     return v;
   }
@@ -82,7 +80,7 @@ function isValidNextBillingDate(s: string): boolean {
   if (m < 1 || m > 12 || d < 1 || d > 31) {
     return false;
   }
-  const dt = new Date(s + "T12:00:00.000Z");
+  const dt = new Date(`${s}T12:00:00.000Z`);
   return (
     Number.isFinite(dt.getTime()) &&
     dt.getUTCFullYear() === y &&
@@ -107,8 +105,7 @@ export function parseSubscriptionPayload(
     return { ok: false, error: "Expected JSON object" };
   }
   const o = item as Record<string, unknown>;
-  let id =
-    typeof o.id === "string" && o.id.trim() ? o.id.trim() : "";
+  let id = typeof o.id === "string" && o.id.trim() ? o.id.trim() : "";
   if (options.requireId) {
     if (!id || id.length > MAX_ID_LEN) {
       return { ok: false, error: "id is invalid" };
@@ -171,9 +168,7 @@ export type SubscriptionPatchFields = Pick<
 >;
 
 /** PATCH body: name, amount, interval, nextBillingAt only (no id). */
-export function parseSubscriptionFieldsBody(
-  body: unknown,
-):
+export function parseSubscriptionFieldsBody(body: unknown):
   | {
       ok: true;
       fields: SubscriptionPatchFields;
@@ -284,7 +279,7 @@ function mapDbRowToSubscriptionRow(r: {
   return row;
 }
 
-async function resolvePrimaryWorkspaceEmailForWorkspace(
+async function _resolvePrimaryWorkspaceEmailForWorkspace(
   db: D1Database,
   workspaceId: string,
   ownerUserId: string,
@@ -379,11 +374,14 @@ export async function createSubscriptionForWorkspace(
   db: D1Database,
   workspaceId: string,
   createdByUserId: string,
-  body: { id: string; name: string; amount: string; interval: string; nextBillingAt: string },
-): Promise<
-  { ok: true }
-> {
-
+  body: {
+    id: string;
+    name: string;
+    amount: string;
+    interval: string;
+    nextBillingAt: string;
+  },
+): Promise<{ ok: true }> {
   const saas = await findOrCreateSaasByName(db, body.name);
   const costCents = amountStringToCostCents(body.amount);
 
@@ -416,10 +414,13 @@ export async function updateSubscriptionForWorkspace(
   db: D1Database,
   workspaceId: string,
   subscriptionId: string,
-  body: { name: string; amount: string; interval: string; nextBillingAt: string },
-): Promise<
-  { ok: true } | { ok: false; error: string }
-> {
+  body: {
+    name: string;
+    amount: string;
+    interval: string;
+    nextBillingAt: string;
+  },
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const existing = await getSubscriptionRowByIdForWorkspace(
     db,
     workspaceId,
@@ -429,7 +430,10 @@ export async function updateSubscriptionForWorkspace(
     return { ok: false, error: "Subscription not found" } as const;
   }
   if (existing.status === "cancelled") {
-    return { ok: false, error: "Cancelled subscriptions cannot be edited." } as const;
+    return {
+      ok: false,
+      error: "Cancelled subscriptions cannot be edited.",
+    } as const;
   }
 
   const saas = await findOrCreateSaasByName(db, body.name);
@@ -499,7 +503,10 @@ export async function cancelSubscriptionForWorkspace(
     return { ok: false, error: "Subscription not found" } as const;
   }
   if (existing.status === "cancelled") {
-    return { ok: false, error: "Cancelled subscriptions cannot be cancelled." } as const;
+    return {
+      ok: false,
+      error: "Cancelled subscriptions cannot be cancelled.",
+    } as const;
   }
 
   await db

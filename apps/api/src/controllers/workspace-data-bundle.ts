@@ -15,7 +15,6 @@ export async function buildWorkspaceDataBundle(
   db: D1Database,
   workspaceId: string,
 ): Promise<BuildWorkspaceDataBundleResult> {
-
-    const subscriptions = await listSubscriptionsForWorkspace(db, workspaceId);
+  const subscriptions = await listSubscriptionsForWorkspace(db, workspaceId);
   return { ok: true, payload: { subscriptions } };
 }

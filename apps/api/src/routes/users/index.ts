@@ -26,9 +26,7 @@ usersRouter.get("/me", async (c) => {
       name: row.name,
       imageUrl: row.image_url,
     },
-    workspace: workspace
-      ? { id: workspace.id, name: workspace.name }
-      : null,
+    workspace: workspace ? { id: workspace.id, name: workspace.name } : null,
   });
 });
 

@@ -40,11 +40,8 @@ import {
   type DashboardOverview as DashboardOverviewData,
   useDashboardOverview,
 } from "@/services/dashboard";
-
+import { DASH_SCROLL_CONTENT } from "../lib/dashboard-page-layout";
 import { DashPageHeader } from "./dash-page-header";
-import {
-  DASH_SCROLL_CONTENT,
-} from "../lib/dashboard-page-layout";
 
 const usdWhole = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -285,33 +282,34 @@ export function DashboardOverview() {
               ) : (
                 dashboard.upcomingRenewals.map(
                   (r: DashboardOverviewData["upcomingRenewals"][number]) => (
-                  <div
-                    key={r.id}
-                    className="flex items-center justify-between gap-2 border-b border-border/60 py-3 last:border-b-0"
-                  >
-                    <div className="flex min-w-0 items-center gap-2">
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                        <HugeiconsIcon
-                          icon={SparklesIcon}
-                          className="size-3.5"
-                        />
-                      </span>
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-medium text-foreground">
-                          {r.name}
-                        </p>
-                        <p className="text-[0.625rem] text-muted-foreground">
-                          {r.inDays === 0
-                            ? "Renews today"
-                            : `In ${r.inDays} day${r.inDays === 1 ? "" : "s"}`}
-                        </p>
+                    <div
+                      key={r.id}
+                      className="flex items-center justify-between gap-2 border-b border-border/60 py-3 last:border-b-0"
+                    >
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                          <HugeiconsIcon
+                            icon={SparklesIcon}
+                            className="size-3.5"
+                          />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-medium text-foreground">
+                            {r.name}
+                          </p>
+                          <p className="text-[0.625rem] text-muted-foreground">
+                            {r.inDays === 0
+                              ? "Renews today"
+                              : `In ${r.inDays} day${r.inDays === 1 ? "" : "s"}`}
+                          </p>
+                        </div>
                       </div>
+                      <span className="shrink-0 text-xs font-medium tabular-nums text-foreground">
+                        {usdWhole.format(r.amount)}
+                      </span>
                     </div>
-                    <span className="shrink-0 text-xs font-medium tabular-nums text-foreground">
-                      {usdWhole.format(r.amount)}
-                    </span>
-                  </div>
-                ))
+                  ),
+                )
               )}
             </CardContent>
             <CardFooter className="pt-0">
@@ -364,7 +362,9 @@ export function DashboardOverview() {
                         paddingAngle={1}
                       >
                         {categoryData.map(
-                          (entry: DashboardOverviewData["categoryBreakdown"][number]) => (
+                          (
+                            entry: DashboardOverviewData["categoryBreakdown"][number],
+                          ) => (
                             <Cell
                               key={entry.name}
                               fill={`var(--color-${entry.key})`}
@@ -377,28 +377,31 @@ export function DashboardOverview() {
                   </ChartContainer>
                   <ul className="w-full min-w-0 space-y-2 text-xs sm:max-w-48">
                     {categoryData.map(
-                      (c: DashboardOverviewData["categoryBreakdown"][number]) => (
-                      <li
-                        key={c.name}
-                        className="flex items-center justify-between gap-2"
-                      >
-                        <span className="flex items-center gap-2 min-w-0">
-                          <span
-                            className="size-2 shrink-0 rounded-sm"
-                            style={{
-                              backgroundColor: `var(--color-${c.key}, var(--color-chart-1))`,
-                            }}
-                            aria-hidden
-                          />
-                          <span className="truncate text-foreground">
-                            {c.name}
+                      (
+                        c: DashboardOverviewData["categoryBreakdown"][number],
+                      ) => (
+                        <li
+                          key={c.name}
+                          className="flex items-center justify-between gap-2"
+                        >
+                          <span className="flex items-center gap-2 min-w-0">
+                            <span
+                              className="size-2 shrink-0 rounded-sm"
+                              style={{
+                                backgroundColor: `var(--color-${c.key}, var(--color-chart-1))`,
+                              }}
+                              aria-hidden
+                            />
+                            <span className="truncate text-foreground">
+                              {c.name}
+                            </span>
                           </span>
-                        </span>
-                        <span className="shrink-0 text-muted-foreground">
-                          {c.value}%
-                        </span>
-                      </li>
-                    ))}
+                          <span className="shrink-0 text-muted-foreground">
+                            {c.value}%
+                          </span>
+                        </li>
+                      ),
+                    )}
                   </ul>
                 </>
               )}

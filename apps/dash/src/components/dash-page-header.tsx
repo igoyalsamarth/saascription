@@ -75,9 +75,7 @@ export function DashPageHeader({
             <h1
               className={cn(
                 "font-semibold tracking-tight text-foreground",
-                eyebrow != null
-                  ? "text-lg"
-                  : "text-lg sm:text-xl",
+                eyebrow != null ? "text-lg" : "text-lg sm:text-xl",
               )}
             >
               {title}

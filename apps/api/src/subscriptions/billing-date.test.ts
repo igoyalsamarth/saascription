@@ -1,10 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import {
-  advanceNextBillingDate,
-  isDateOnOrBeforeToday,
-} from "./billing-date";
+import { advanceNextBillingDate, isDateOnOrBeforeToday } from "./billing-date";
 
 describe("advanceNextBillingDate", () => {
   it("advances monthly dates within the same year", () => {

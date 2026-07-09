@@ -1,5 +1,5 @@
-import { buildSpendsAnalyticsFromSubscriptions } from "../lib/workspace-subscription-aggregates";
 import { useWorkspaceDataBundleQuery } from "@/services/workspace";
+import { buildSpendsAnalyticsFromSubscriptions } from "../lib/workspace-subscription-aggregates";
 
 export type SpendsMonthsWindow = 3 | 6 | 12;
 
@@ -40,9 +40,6 @@ export type SpendsAnalytics = {
 
 export function useSpendsAnalytics(months: SpendsMonthsWindow) {
   return useWorkspaceDataBundleQuery((data) =>
-    buildSpendsAnalyticsFromSubscriptions(
-      data.subscriptions,
-      months,
-    ),
+    buildSpendsAnalyticsFromSubscriptions(data.subscriptions, months),
   );
 }

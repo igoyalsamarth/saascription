@@ -1,11 +1,14 @@
 import {
   advanceNextBillingDate,
-  isDateOnOrBeforeToday,
   type BillableInterval,
+  isDateOnOrBeforeToday,
 } from "./billing-date";
 import { getSubscriptionForRollover } from "./queries";
 
-function rolloverExternalRef(subscriptionId: string, billingDate: string): string {
+function rolloverExternalRef(
+  subscriptionId: string,
+  billingDate: string,
+): string {
   return `auto_rollover:${subscriptionId}:${billingDate}`;
 }
 

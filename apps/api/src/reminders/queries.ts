@@ -56,7 +56,12 @@ export async function getUpcomingSubscriptionsForUser(
   db: D1Database,
   userId: string,
 ): Promise<
-  | { ok: true; email: string; name: string | null; subscriptions: ReminderSubscriptionRow[] }
+  | {
+      ok: true;
+      email: string;
+      name: string | null;
+      subscriptions: ReminderSubscriptionRow[];
+    }
   | { ok: false; reason: "user_not_found" | "no_subscriptions" }
 > {
   const user = await db

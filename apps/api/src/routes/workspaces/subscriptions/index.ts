@@ -37,8 +37,14 @@ subscriptionsRouter.post("/", async (c) => {
   if (!workspaceId) {
     return c.json({ error: "Missing workspaceId" }, 400);
   }
-  const body = await c.req.json<{ id: string; name: string; amount: string; interval: string; nextBillingAt: string }>();
-  
+  const body = await c.req.json<{
+    id: string;
+    name: string;
+    amount: string;
+    interval: string;
+    nextBillingAt: string;
+  }>();
+
   await createSubscriptionForWorkspace(c.env.DB, workspaceId, userId, body);
   return c.json({ ok: true });
 });
@@ -56,7 +62,12 @@ subscriptionsRouter.patch("/:id", async (c) => {
   if (!id) {
     return c.json({ error: "Missing id" }, 400);
   }
-  const body = await c.req.json<{ name: string; amount: string; interval: string; nextBillingAt: string }>();
+  const body = await c.req.json<{
+    name: string;
+    amount: string;
+    interval: string;
+    nextBillingAt: string;
+  }>();
 
   await updateSubscriptionForWorkspace(c.env.DB, workspaceId, id, body);
   return c.json({ ok: true });

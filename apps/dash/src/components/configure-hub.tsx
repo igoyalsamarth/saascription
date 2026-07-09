@@ -12,9 +12,8 @@ import {
   cn,
 } from "@saascription/ui";
 import { Link } from "@tanstack/react-router";
-
-import { DashPageHeader } from "./dash-page-header";
 import { DASH_SCROLL_CONTENT } from "../lib/dashboard-page-layout";
+import { DashPageHeader } from "./dash-page-header";
 
 export function ConfigureHubPage() {
   return (

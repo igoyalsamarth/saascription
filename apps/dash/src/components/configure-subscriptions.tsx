@@ -46,7 +46,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { DashPageHeader } from "./dash-page-header";
 import { DASH_SCROLL_CONTENT } from "../lib/dashboard-page-layout";
 import {
   type BillingInterval,
@@ -69,6 +68,7 @@ import {
   type WorkspaceDataBundleResponse,
   workspaceBundleQueryKey,
 } from "../services/workspace";
+import { DashPageHeader } from "./dash-page-header";
 import { SubscriptionSaasCombobox } from "./subscription-saas-combobox";
 
 const intervalOptions: { value: BillingInterval; label: string }[] = [

@@ -1,4 +1,7 @@
-import type { NextDaySubscriptionDetail, ReminderSubscriptionRow } from "./queries";
+import type {
+  NextDaySubscriptionDetail,
+  ReminderSubscriptionRow,
+} from "./queries";
 
 const DASH_URL = "https://dash.saascription.app";
 const DEFAULT_FROM = "Saascription <reminders@saascription.app>";
@@ -196,13 +199,13 @@ export async function sendEmailViaResend(
     }),
   });
 
-  const body = (await res.json().catch(() => null)) as
-    | { id?: string; message?: string }
-    | null;
+  const body = (await res.json().catch(() => null)) as {
+    id?: string;
+    message?: string;
+  } | null;
 
   if (!res.ok) {
-    const message =
-      body?.message ?? `Resend API error (${res.status})`;
+    const message = body?.message ?? `Resend API error (${res.status})`;
     return { ok: false, error: message };
   }
 
