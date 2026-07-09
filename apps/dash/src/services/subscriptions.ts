@@ -5,11 +5,11 @@ import {
 } from "@tanstack/react-query";
 import { useClient } from "@/lib/client";
 import type { SubscriptionRow } from "@/lib/subscriptions";
+import { useUserMe } from "@/services/user";
 import {
   useWorkspaceDataBundleQuery,
   workspaceKeys,
 } from "@/services/workspace";
-import { useUserMe } from "@/services/user";
 
 export type CreateSubscriptionResponse = {
   ok: true;

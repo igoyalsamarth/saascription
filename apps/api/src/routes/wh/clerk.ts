@@ -1,6 +1,9 @@
 import { Hono } from "hono";
 import { Webhook } from "svix";
-import { deleteUserByClerkId, upsertUserFromClerk } from "../../controllers/clerk-users";
+import {
+  deleteUserByClerkId,
+  upsertUserFromClerk,
+} from "../../controllers/clerk-users";
 import type { ClerkWebhookEvent } from "../../types/clerk";
 
 const wh = new Hono<{ Bindings: CloudflareBindings }>();
@@ -8,7 +11,10 @@ const wh = new Hono<{ Bindings: CloudflareBindings }>();
 wh.post("/", async (c) => {
   const secret = c.env.CLERK_WEBHOOK_SIGNING_SECRET;
   if (!secret?.trim()) {
-    return c.json({ error: "CLERK_WEBHOOK_SIGNING_SECRET is not configured" }, 500);
+    return c.json(
+      { error: "CLERK_WEBHOOK_SIGNING_SECRET is not configured" },
+      500,
+    );
   }
 
   const payload = await c.req.text();
@@ -41,7 +47,8 @@ wh.post("/", async (c) => {
       if (status === 422) {
         return c.json(
           {
-            error: "User has no resolvable email yet; Clerk may send a follow-up event",
+            error:
+              "User has no resolvable email yet; Clerk may send a follow-up event",
           },
           422,
         );

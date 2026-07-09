@@ -28,9 +28,8 @@ import {
 } from "@saascription/ui";
 import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts";
-
-import { DashPageHeader } from "./dash-page-header";
 import { DASH_SCROLL_CONTENT } from "../lib/dashboard-page-layout";
+import { DashPageHeader } from "./dash-page-header";
 
 const USER_MESSAGE_CLASS =
   "rounded-2xl border border-primary/20 bg-primary/10 px-4 py-2.5 text-sm text-foreground";
@@ -151,9 +150,7 @@ export function AiOptimizationPage() {
             </div>
           </div>
 
-          <div
-            className={cn(DASH_SCROLL_CONTENT, "px-4 py-4 sm:px-6")}
-          >
+          <div className={cn(DASH_SCROLL_CONTENT, "px-4 py-4 sm:px-6")}>
             <div className="mx-auto flex max-w-3xl flex-col gap-6">
               <div
                 className={cn(

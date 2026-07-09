@@ -1,5 +1,5 @@
-import { buildDashboardOverviewFromSubscriptions } from "../lib/workspace-subscription-aggregates";
 import { useWorkspaceDataBundleQuery } from "@/services/workspace";
+import { buildDashboardOverviewFromSubscriptions } from "../lib/workspace-subscription-aggregates";
 
 export type DashboardCategoryKey =
   | "software"

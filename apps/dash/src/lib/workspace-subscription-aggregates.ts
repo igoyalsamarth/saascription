@@ -1,12 +1,12 @@
-import type {
-  BillingInterval,
-  SubscriptionRow,
-} from "@/lib/subscriptions";
+import type { BillingInterval, SubscriptionRow } from "@/lib/subscriptions";
 import type {
   CalendarBillingInterval,
   CalendarRenewalItem,
 } from "@/services/calendar";
-import type { DashboardCategoryKey, DashboardOverview } from "@/services/dashboard";
+import type {
+  DashboardCategoryKey,
+  DashboardOverview,
+} from "@/services/dashboard";
 import type {
   SpendsAnalytics,
   SpendsCategoryKey,
@@ -410,9 +410,7 @@ export function buildDashboardOverviewFromSubscriptions(
     .sort((a, b) => a.inDays - b.inDays)
     .slice(0, 3);
 
-  const sortedByCreated = [...rows].sort(
-    (a, b) => createdMs(b) - createdMs(a),
-  );
+  const sortedByCreated = [...rows].sort((a, b) => createdMs(b) - createdMs(a));
   const latest = sortedByCreated[0];
   let recentActivity: DashboardOverview["recentActivity"] = null;
   if (latest) {

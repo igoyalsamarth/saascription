@@ -8,13 +8,17 @@ export function resolvePrimaryEmail(data: ClerkUserData): string | null {
     if (match?.email_address) return match.email_address.trim().toLowerCase();
   }
   const verified = emails.find((e) => e.verification?.status === "verified");
-  if (verified?.email_address) return verified.email_address.trim().toLowerCase();
+  if (verified?.email_address)
+    return verified.email_address.trim().toLowerCase();
   const first = emails[0]?.email_address?.trim().toLowerCase();
   return first ?? null;
 }
 
 export function buildDisplayName(data: ClerkUserData): string | null {
-  const parts = [data.first_name, data.last_name].filter(Boolean).join(" ").trim();
+  const parts = [data.first_name, data.last_name]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
   if (parts.length > 0) return parts;
   if (data.username) return data.username;
   return null;

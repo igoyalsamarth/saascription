@@ -1,7 +1,4 @@
-import {
-  ArrowRight01Icon,
-  CloudIcon,
-} from "@hugeicons/core-free-icons";
+import { ArrowRight01Icon, CloudIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Badge,
@@ -35,11 +32,8 @@ import {
   type SpendsOpportunity,
   useSpendsAnalytics,
 } from "@/services/spends";
-
+import { DASH_SCROLL_CONTENT } from "../lib/dashboard-page-layout";
 import { DashPageHeader } from "./dash-page-header";
-import {
-  DASH_SCROLL_CONTENT,
-} from "../lib/dashboard-page-layout";
 
 function formatSpendCompactUsd(n: number): string {
   if (!Number.isFinite(n) || n <= 0) {
@@ -281,7 +275,9 @@ export function SpendsAnalytics() {
                         paddingAngle={1}
                       >
                         {categoryDonut.map(
-                          (entry: SpendsAnalyticsData["categoryBreakdown"][number]) => (
+                          (
+                            entry: SpendsAnalyticsData["categoryBreakdown"][number],
+                          ) => (
                             <Cell
                               key={entry.name}
                               fill={`var(--color-${entry.key})`}
@@ -336,27 +332,28 @@ export function SpendsAnalytics() {
                   <ul className="w-full min-w-0 space-y-2.5 text-xs sm:max-w-52">
                     {categoryDonut.map(
                       (c: SpendsAnalyticsData["categoryBreakdown"][number]) => (
-                      <li
-                        key={c.name}
-                        className="flex items-center justify-between gap-2"
-                      >
-                        <span className="flex min-w-0 items-center gap-2">
-                          <span
-                            className="size-2 shrink-0 rounded-sm"
-                            style={{
-                              backgroundColor: `var(--color-${c.key})`,
-                            }}
-                            aria-hidden
-                          />
-                          <span className="truncate text-foreground">
-                            {c.name}
+                        <li
+                          key={c.name}
+                          className="flex items-center justify-between gap-2"
+                        >
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span
+                              className="size-2 shrink-0 rounded-sm"
+                              style={{
+                                backgroundColor: `var(--color-${c.key})`,
+                              }}
+                              aria-hidden
+                            />
+                            <span className="truncate text-foreground">
+                              {c.name}
+                            </span>
                           </span>
-                        </span>
-                        <span className="shrink-0 tabular-nums text-muted-foreground">
-                          {c.value}%
-                        </span>
-                      </li>
-                    ))}
+                          <span className="shrink-0 tabular-nums text-muted-foreground">
+                            {c.value}%
+                          </span>
+                        </li>
+                      ),
+                    )}
                   </ul>
                 </>
               )}

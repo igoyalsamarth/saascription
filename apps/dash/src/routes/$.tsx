@@ -1,6 +1,5 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
-
 import { buttonVariants, cn } from "@saascription/ui";
+import { createFileRoute, Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/$")({
   component: NotFoundRoute,

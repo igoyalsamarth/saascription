@@ -1,7 +1,14 @@
-import { buildDisplayName, pickImageUrl, resolvePrimaryEmail } from "../lib/clerk-user";
+import {
+  buildDisplayName,
+  pickImageUrl,
+  resolvePrimaryEmail,
+} from "../lib/clerk-user";
 import type { ClerkUserData } from "../types/clerk";
 
-export async function upsertUserFromClerk(db: D1Database, data: ClerkUserData): Promise<void> {
+export async function upsertUserFromClerk(
+  db: D1Database,
+  data: ClerkUserData,
+): Promise<void> {
   const email = resolvePrimaryEmail(data);
   if (!email) {
     const err = new Error("missing_email");
@@ -25,6 +32,9 @@ export async function upsertUserFromClerk(db: D1Database, data: ClerkUserData): 
     .run();
 }
 
-export async function deleteUserByClerkId(db: D1Database, clerkUserId: string): Promise<void> {
+export async function deleteUserByClerkId(
+  db: D1Database,
+  clerkUserId: string,
+): Promise<void> {
   await db.prepare("DELETE FROM users WHERE id = ?").bind(clerkUserId).run();
 }

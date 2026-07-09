@@ -37,8 +37,8 @@ import {
 } from "@/lib/calendar-utils";
 import { useCalendarRenewals } from "@/services/calendar";
 import type { CalendarViewMode } from "../lib/calendar-types";
-import { DashPageHeader } from "./dash-page-header";
 import { DASH_SCROLL_CONTENT } from "../lib/dashboard-page-layout";
+import { DashPageHeader } from "./dash-page-header";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 

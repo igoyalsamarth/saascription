@@ -35,6 +35,7 @@ export default function ThemeToggle({ className }: ThemeToggleProps) {
   const { theme, setTheme } = useTheme();
   const active = theme ?? "system";
   const legendId = useId();
+  const groupName = useId();
 
   return (
     <fieldset className={cn("m-0 min-w-0 border-0 p-0", className)}>
@@ -46,33 +47,35 @@ export default function ThemeToggle({ className }: ThemeToggleProps) {
           "flex rounded-lg bg-muted/80 p-0.5 ring-1 ring-border/60",
           "dark:bg-muted/50 dark:ring-border",
         )}
-        role="radiogroup"
-        aria-labelledby={legendId}
       >
         {SEGMENTS.map(({ theme: value, label, icon }) => {
           const isOn = active === value;
           return (
-            <button
+            <label
               key={value}
-              type="button"
-              role="radio"
-              aria-checked={isOn}
-              aria-label={label}
               className={cn(
-                "flex min-h-8 min-w-8 flex-1 items-center justify-center rounded-md transition-[color,box-shadow,background-color]",
-                "focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none",
+                "flex min-h-8 min-w-8 flex-1 cursor-pointer items-center justify-center rounded-md transition-[color,box-shadow,background-color]",
+                "has-[:focus-visible]:relative has-[:focus-visible]:z-10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-background has-[:focus-visible]:outline-none",
                 isOn
                   ? "bg-background text-foreground shadow-sm dark:bg-background/90"
                   : "text-muted-foreground hover:text-foreground",
               )}
-              onClick={() => setTheme(value)}
             >
+              <input
+                type="radio"
+                name={groupName}
+                value={value}
+                checked={isOn}
+                onChange={() => setTheme(value)}
+                className="sr-only"
+                aria-label={label}
+              />
               <HugeiconsIcon
                 icon={icon}
                 className="size-4 shrink-0"
                 aria-hidden
               />
-            </button>
+            </label>
           );
         })}
       </div>

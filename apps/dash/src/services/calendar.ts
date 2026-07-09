@@ -1,5 +1,5 @@
-import { buildCalendarRenewalsFromSubscriptions } from "../lib/workspace-subscription-aggregates";
 import { useWorkspaceDataBundleQuery } from "@/services/workspace";
+import { buildCalendarRenewalsFromSubscriptions } from "../lib/workspace-subscription-aggregates";
 
 export type CalendarBillingInterval = "monthly" | "yearly" | "custom";
 

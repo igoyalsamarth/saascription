@@ -1,3 +1,4 @@
+import { processAutoRollover } from "../subscriptions/rollover";
 import {
   buildMonthlyReminderEmail,
   buildNextDayReminderEmail,
@@ -7,7 +8,7 @@ import {
   getSubscriptionForNextDayReminder,
   getUpcomingSubscriptionsForUser,
 } from "./queries";
-import { isReminderQueueMessage } from "./types";
+import { isAutoRolloverMessage, isReminderQueueMessage } from "./types";
 
 function currentMonthLabel(now = new Date()): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -43,7 +44,9 @@ async function processMonthlyReminder(
 
   const monthlySubs = subscriptionsForCurrentMonth(result.subscriptions);
   if (monthlySubs.length === 0) {
-    console.log(`[reminders] skip monthly userId=${userId} reason=no_month_subs`);
+    console.log(
+      `[reminders] skip monthly userId=${userId} reason=no_month_subs`,
+    );
     return;
   }
 
@@ -99,16 +102,18 @@ export async function handleReminderQueue(
   for (const message of batch.messages) {
     try {
       const body = message.body;
-      if (!isReminderQueueMessage(body)) {
-        console.warn("[reminders] unknown queue message", body);
+      if (isAutoRolloverMessage(body)) {
+        await processAutoRollover(env, body.subscriptionId);
+      } else if (isReminderQueueMessage(body)) {
+        if (body.type === "monthly") {
+          await processMonthlyReminder(env, body.userId);
+        } else {
+          await processNextDayReminder(env, body.subscriptionId);
+        }
+      } else {
+        console.warn("[queue] unknown queue message", body);
         message.ack();
         continue;
-      }
-
-      if (body.type === "monthly") {
-        await processMonthlyReminder(env, body.userId);
-      } else {
-        await processNextDayReminder(env, body.subscriptionId);
       }
 
       message.ack();

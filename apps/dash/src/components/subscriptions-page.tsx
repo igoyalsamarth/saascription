@@ -1,7 +1,4 @@
-import {
-  Alert01Icon,
-  Clock01Icon,
-} from "@hugeicons/core-free-icons";
+import { Alert01Icon, Clock01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Badge,
@@ -33,8 +30,8 @@ import {
   type SubscriptionTableRow,
 } from "@/lib/subscriptions-table";
 import { useWorkspaceSubscriptionsQuery } from "@/services/subscriptions";
-import { DashPageHeader } from "./dash-page-header";
 import { DASH_SCROLL_CONTENT } from "../lib/dashboard-page-layout";
+import { DashPageHeader } from "./dash-page-header";
 
 const pageSize = 6;
 
