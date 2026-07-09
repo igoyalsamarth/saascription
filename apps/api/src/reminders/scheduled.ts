@@ -1,8 +1,9 @@
+import { listSubscriptionIdsForAutoRollover } from "../subscriptions/queries";
 import {
   listSubscriptionIdsForNextDayReminders,
   listUserIdsForMonthlyReminders,
 } from "./queries";
-import type { ReminderQueueMessage } from "./types";
+import type { QueueMessage } from "./types";
 
 function utcDateParts(now: Date): { year: number; month: number; day: number } {
   return {
@@ -22,7 +23,7 @@ function monthLabel(now: Date): string {
 
 async function enqueueMessages(
   queue: Queue,
-  messages: ReminderQueueMessage[],
+  messages: QueueMessage[],
 ): Promise<void> {
   const batchSize = 100;
   for (let i = 0; i < messages.length; i += batchSize) {
@@ -31,10 +32,10 @@ async function enqueueMessages(
   }
 }
 
-export async function runReminderCron(env: CloudflareBindings): Promise<void> {
+export async function runDailyCron(env: CloudflareBindings): Promise<void> {
   const now = new Date();
   const { day } = utcDateParts(now);
-  const messages: ReminderQueueMessage[] = [];
+  const messages: QueueMessage[] = [];
 
   if (day === 1) {
     const userIds = await listUserIdsForMonthlyReminders(env.DB);
@@ -54,6 +55,12 @@ export async function runReminderCron(env: CloudflareBindings): Promise<void> {
     `[reminders] next-day scan: enqueued ${subscriptionIds.length} subscriptions`,
   );
 
+  const rolloverIds = await listSubscriptionIdsForAutoRollover(env.DB);
+  for (const subscriptionId of rolloverIds) {
+    messages.push({ reason: "auto_rollover", subscriptionId });
+  }
+  console.log(`[rollover] scan: enqueued ${rolloverIds.length} subscriptions`);
+
   if (messages.length > 0) {
     await enqueueMessages(env.QUEUE, messages);
   }
@@ -65,8 +72,8 @@ export async function handleReminderScheduled(
   ctx: ExecutionContext,
 ): Promise<void> {
   ctx.waitUntil(
-    runReminderCron(env).catch((err) => {
-      console.error("[reminders] scheduled handler failed", err);
+    runDailyCron(env).catch((err) => {
+      console.error("[cron] scheduled handler failed", err);
     }),
   );
 }
