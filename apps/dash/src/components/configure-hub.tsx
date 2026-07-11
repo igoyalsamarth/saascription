@@ -12,10 +12,17 @@ import {
   cn,
 } from "@saascription/ui";
 import { Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { useSyncStatusQuery } from "@/services/sync";
 import { DASH_SCROLL_CONTENT } from "../lib/dashboard-page-layout";
 import { DashPageHeader } from "./dash-page-header";
+import { SyncSubscriptionsDialog } from "./sync-subscriptions-dialog";
 
 export function ConfigureHubPage() {
+  const [syncOpen, setSyncOpen] = useState(false);
+  const { data: syncStatus } = useSyncStatusQuery();
+  const syncDone = Boolean(syncStatus?.syncCompleted);
+
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-muted/30">
       <DashPageHeader
@@ -36,12 +43,14 @@ export function ConfigureHubPage() {
                   >
                     <HugeiconsIcon icon={AiBrain01Icon} className="size-5" />
                   </span>
-                  <Badge
-                    variant="secondary"
-                    className="shrink-0 text-[0.625rem]"
-                  >
-                    Coming Soon
-                  </Badge>
+                  {syncDone ? (
+                    <Badge
+                      variant="secondary"
+                      className="shrink-0 text-[0.625rem]"
+                    >
+                      Synced
+                    </Badge>
+                  ) : null}
                 </div>
                 <CardTitle className="text-base">Auto setup</CardTitle>
                 <CardDescription>
@@ -53,10 +62,11 @@ export function ConfigureHubPage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  disabled
                   className="w-full"
+                  disabled={syncDone}
+                  onClick={() => setSyncOpen(true)}
                 >
-                  Sync Subscriptions
+                  {syncDone ? "Sync complete" : "Sync Subscriptions"}
                 </Button>
               </CardFooter>
             </Card>
@@ -90,6 +100,7 @@ export function ConfigureHubPage() {
           </div>
         </div>
       </div>
+      <SyncSubscriptionsDialog open={syncOpen} onOpenChange={setSyncOpen} />
     </div>
   );
 }

@@ -4,6 +4,9 @@ import { cors } from "hono/cors";
 import { app } from "./app";
 import { handleReminderQueue } from "./reminders/consumer";
 import { handleReminderScheduled } from "./reminders/scheduled";
+import { GmailSyncWorkflow } from "./sync/workflow";
+
+export { GmailSyncWorkflow };
 
 const root = new Hono<{ Bindings: CloudflareBindings }>();
 

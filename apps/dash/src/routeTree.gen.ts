@@ -26,6 +26,7 @@ import { Route as ConfigureIndexRouteImport } from './routes/configure/index'
 import { Route as SignUpSplatRouteImport } from './routes/sign-up/$'
 import { Route as SignInSplatRouteImport } from './routes/sign-in/$'
 import { Route as ConfigureSubscriptionsRouteImport } from './routes/configure/subscriptions'
+import { Route as ApiAuthGoogleCallbackRouteImport } from './routes/api/auth/google/callback'
 
 const SubsRoute = SubsRouteImport.update({
   id: '/subs',
@@ -112,6 +113,11 @@ const ConfigureSubscriptionsRoute = ConfigureSubscriptionsRouteImport.update({
   path: '/subscriptions',
   getParentRoute: () => ConfigureRouteRoute,
 } as any)
+const ApiAuthGoogleCallbackRoute = ApiAuthGoogleCallbackRouteImport.update({
+  id: '/api/auth/google/callback',
+  path: '/api/auth/google/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/configure/': typeof ConfigureIndexRoute
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
+  '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -147,6 +154,7 @@ export interface FileRoutesByTo {
   '/configure': typeof ConfigureIndexRoute
   '/sign-in': typeof SignInIndexRoute
   '/sign-up': typeof SignUpIndexRoute
+  '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -167,6 +175,7 @@ export interface FileRoutesById {
   '/configure/': typeof ConfigureIndexRoute
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
+  '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -188,6 +197,7 @@ export interface FileRouteTypes {
     | '/configure/'
     | '/sign-in/'
     | '/sign-up/'
+    | '/api/auth/google/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -204,6 +214,7 @@ export interface FileRouteTypes {
     | '/configure'
     | '/sign-in'
     | '/sign-up'
+    | '/api/auth/google/callback'
   id:
     | '__root__'
     | '/'
@@ -223,6 +234,7 @@ export interface FileRouteTypes {
     | '/configure/'
     | '/sign-in/'
     | '/sign-up/'
+    | '/api/auth/google/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -237,6 +249,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   SpendsRoute: typeof SpendsRoute
   SubsRoute: typeof SubsRoute
+  ApiAuthGoogleCallbackRoute: typeof ApiAuthGoogleCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -360,6 +373,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConfigureSubscriptionsRouteImport
       parentRoute: typeof ConfigureRouteRoute
     }
+    '/api/auth/google/callback': {
+      id: '/api/auth/google/callback'
+      path: '/api/auth/google/callback'
+      fullPath: '/api/auth/google/callback'
+      preLoaderRoute: typeof ApiAuthGoogleCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -417,6 +437,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   SpendsRoute: SpendsRoute,
   SubsRoute: SubsRoute,
+  ApiAuthGoogleCallbackRoute: ApiAuthGoogleCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -14,7 +14,11 @@
       "CLERK_WEBHOOK_SIGNING_SECRET",
       "CLERK_SECRET_KEY",
       "CLERK_PUBLISHABLE_KEY",
-      "RESEND_API_KEY"
+      "RESEND_API_KEY",
+      "GOOGLE_OAUTH_CLIENT_ID",
+      "GOOGLE_OAUTH_CLIENT_SECRET",
+      "GMAIL_TOKEN_ENCRYPTION_KEY",
+      "OPENAI_API_KEY"
     ]
   },
   "observability": {
@@ -33,6 +37,13 @@
       "database_id": "2674de39-aadc-437b-a0cb-e0cabf752865",
       "remote": true,
       "migrations_dir": "db/migrations"
+    }
+  ],
+  "workflows": [
+    {
+      "name": "gmail-sync",
+      "binding": "GMAIL_SYNC_WORKFLOW",
+      "class_name": "GmailSyncWorkflow"
     }
   ],
   "queues": {

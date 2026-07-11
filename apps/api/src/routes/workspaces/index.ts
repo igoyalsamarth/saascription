@@ -7,10 +7,12 @@ import {
   getWorkspaceForOwner,
 } from "../../controllers/workspaces";
 import { subscriptionsRouter } from "./subscriptions";
+import { syncRouter } from "./sync";
 
 const workspacesRouter = new Hono<{ Bindings: CloudflareBindings }>();
 
 workspacesRouter.route("/:workspaceId/subscriptions", subscriptionsRouter);
+workspacesRouter.route("/:workspaceId/sync", syncRouter);
 
 workspacesRouter.get("/:workspaceId/data", async (c) => {
   const { userId } = getAuth(c);
