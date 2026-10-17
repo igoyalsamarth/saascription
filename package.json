@@ -8,6 +8,8 @@
     "www:build": "turbo run build --filter=www",
     "dash:dev": "turbo run dev --filter=dash",
     "dash:build": "turbo run build --filter=dash",
+    "seller:dev": "turbo run dev --filter=seller",
+    "seller:build": "turbo run build --filter=seller",
     "api:dev": "turbo run dev --filter=api",
     "api:deploy": "turbo run deploy --filter=api",
     "lint": "turbo run lint",

@@ -1,0 +1,21 @@
+@import "@fontsource/geist-sans/400.css";
+@import "@fontsource/geist-sans/500.css";
+@import "@fontsource/geist-sans/600.css";
+@import "@fontsource/geist-sans/700.css";
+@import "@fontsource/geist-mono/400.css";
+@import "@fontsource/geist-mono/500.css";
+
+@import "@saascription/ui/styles.css";
+
+@source "./**/*.{tsx,ts}";
+@source "../../../packages/ui/src/**/*.{tsx,ts}";
+
+@layer base {
+  :root {
+    --font-sans: "Geist Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-geist-sans: var(--font-sans);
+    --font-geist-mono:
+      "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      "Liberation Mono", "Courier New", monospace;
+  }
+}

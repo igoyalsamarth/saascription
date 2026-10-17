@@ -7,11 +7,16 @@ import { handleReminderScheduled } from "./reminders/scheduled";
 
 const root = new Hono<{ Bindings: CloudflareBindings }>();
 
-/** Vite dev server (dash); add deployed dash origins via wrangler when needed. */
+/** Vite dev servers (dash :5173, seller :5174); add deployed origins via wrangler when needed. */
 root.use(
   "*",
   cors({
-    origin: ["http://localhost:5173", "https://dash.saascription.app"],
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "https://dash.saascription.app",
+      "https://seller.saascription.app",
+    ],
     allowHeaders: ["Authorization", "Content-Type"],
     maxAge: 86_400,
   }),
