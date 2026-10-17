@@ -1,0 +1,55 @@
+# Build apps/seller (Vite) and deploy static assets to Cloudflare Pages.
+#
+# Actions secrets (same as the dash workflow):
+#   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
+#   CLERK_PUBLISHABLE_KEY — same pk_… key as the API worker (used as VITE_CLERK_PUBLISHABLE_KEY at build time)
+#   VITE_API_URL — production API base, e.g. https://api.example.com/api/v1
+#
+# Pages project name and output dir are defined in apps/seller/wrangler.jsonc (`name`, `pages_build_output_dir`).
+
+name: Deploy Seller (Cloudflare Pages)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/seller/**"
+      - "packages/ui/**"
+      - "bun.lock"
+      - ".github/workflows/seller-pages-deploy.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-seller-pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.6
+
+      - name: Install monorepo dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build seller
+        working-directory: apps/seller
+        env:
+          VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: bun run build
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/seller
+          packageManager: bun
+          command: pages deploy
