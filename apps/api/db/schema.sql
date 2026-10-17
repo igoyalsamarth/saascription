@@ -56,8 +56,10 @@ CREATE INDEX IF NOT EXISTS idx_workspace_emails_workspace
 -- ---------------------------------------------------------------------------
 -- SaaS catalog (subscriptions reference saas.id)
 --
--- categories: JSON array of string slugs, e.g. ["engineering","collab"].
+-- categories: JSON array of string slugs, e.g. ["engineering","collaboration"].
 -- At most 3 elements; enforce in application code when writing.
+-- created_by: Clerk user id of the seller who listed the product.
+-- NULL for catalog rows created from subscription entry (find-or-create).
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS saas (
   id TEXT PRIMARY KEY NOT NULL,
@@ -65,10 +67,13 @@ CREATE TABLE IF NOT EXISTS saas (
   website_url TEXT,
   icon_url TEXT,
   categories TEXT NOT NULL DEFAULT '[]',
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_by TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_saas_name ON saas (name);
+CREATE INDEX IF NOT EXISTS idx_saas_created_by ON saas (created_by);
 
 -- ---------------------------------------------------------------------------
 -- Subscriptions: one row per tracked plan for a given workspace email + SaaS

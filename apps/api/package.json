@@ -5,7 +5,7 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify",
     "check-types": "tsc --noEmit",
-    "test": "bun test src/subscriptions/billing-date.test.ts",
+    "test": "bun test src/subscriptions/billing-date.test.ts src/controllers/seller-saas.test.ts",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "db:schema:local": "wrangler d1 execute saascription --local --file=./db/schema.sql",
     "db:schema:remote": "wrangler d1 execute saascription --remote --file=./db/schema.sql",
