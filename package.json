@@ -18,9 +18,9 @@
     "check-types": "turbo run check-types"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.5",
-    "turbo": "^2.9.6",
-    "typescript": "5.9.2"
+    "@biomejs/biome": "2.5.15",
+    "turbo": "^2.11.9",
+    "typescript": "7.0.2"
   },
   "engines": {
     "node": ">=18"
