@@ -9,52 +9,27 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SubsRouteImport } from './routes/subs'
-import { Route as SpendsRouteImport } from './routes/spends'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as OnboardRouteImport } from './routes/onboard'
-import { Route as CalRouteImport } from './routes/cal'
-import { Route as AiRouteImport } from './routes/ai'
-import { Route as SplatRouteImport } from './routes/$'
-import { Route as SignUpRouteRouteImport } from './routes/sign-up/route'
-import { Route as SignInRouteRouteImport } from './routes/sign-in/route'
-import { Route as ConfigureRouteRouteImport } from './routes/configure/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as SignUpIndexRouteImport } from './routes/sign-up/index'
-import { Route as SignInIndexRouteImport } from './routes/sign-in/index'
+import { Route as SplatRouteImport } from './routes/$'
+import { Route as AiRouteImport } from './routes/ai'
+import { Route as CalRouteImport } from './routes/cal'
+import { Route as ConfigureRouteRouteImport } from './routes/configure/route'
+import { Route as OnboardRouteImport } from './routes/onboard'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SignInRouteRouteImport } from './routes/sign-in/route'
+import { Route as SignUpRouteRouteImport } from './routes/sign-up/route'
+import { Route as SpendsRouteImport } from './routes/spends'
+import { Route as SubsRouteImport } from './routes/subs'
 import { Route as ConfigureIndexRouteImport } from './routes/configure/index'
-import { Route as SignUpSplatRouteImport } from './routes/sign-up/$'
-import { Route as SignInSplatRouteImport } from './routes/sign-in/$'
 import { Route as ConfigureSubscriptionsRouteImport } from './routes/configure/subscriptions'
+import { Route as SignInIndexRouteImport } from './routes/sign-in/index'
+import { Route as SignInSplatRouteImport } from './routes/sign-in/$'
+import { Route as SignUpIndexRouteImport } from './routes/sign-up/index'
+import { Route as SignUpSplatRouteImport } from './routes/sign-up/$'
 
-const SubsRoute = SubsRouteImport.update({
-  id: '/subs',
-  path: '/subs',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SpendsRoute = SpendsRouteImport.update({
-  id: '/spends',
-  path: '/spends',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardRoute = OnboardRouteImport.update({
-  id: '/onboard',
-  path: '/onboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CalRoute = CalRouteImport.update({
-  id: '/cal',
-  path: '/cal',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AiRoute = AiRouteImport.update({
-  id: '/ai',
-  path: '/ai',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SplatRoute = SplatRouteImport.update({
@@ -62,14 +37,14 @@ const SplatRoute = SplatRouteImport.update({
   path: '/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SignUpRouteRoute = SignUpRouteRouteImport.update({
-  id: '/sign-up',
-  path: '/sign-up',
+const AiRoute = AiRouteImport.update({
+  id: '/ai',
+  path: '/ai',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SignInRouteRoute = SignInRouteRouteImport.update({
-  id: '/sign-in',
-  path: '/sign-in',
+const CalRoute = CalRouteImport.update({
+  id: '/cal',
+  path: '/cal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfigureRouteRoute = ConfigureRouteRouteImport.update({
@@ -77,40 +52,65 @@ const ConfigureRouteRoute = ConfigureRouteRouteImport.update({
   path: '/configure',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const OnboardRoute = OnboardRouteImport.update({
+  id: '/onboard',
+  path: '/onboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SignUpIndexRoute = SignUpIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => SignUpRouteRoute,
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const SignInIndexRoute = SignInIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => SignInRouteRoute,
+const SignInRouteRoute = SignInRouteRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignUpRouteRoute = SignUpRouteRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SpendsRoute = SpendsRouteImport.update({
+  id: '/spends',
+  path: '/spends',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SubsRoute = SubsRouteImport.update({
+  id: '/subs',
+  path: '/subs',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ConfigureIndexRoute = ConfigureIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ConfigureRouteRoute,
 } as any)
-const SignUpSplatRoute = SignUpSplatRouteImport.update({
-  id: '/$',
-  path: '/$',
-  getParentRoute: () => SignUpRouteRoute,
+const ConfigureSubscriptionsRoute = ConfigureSubscriptionsRouteImport.update({
+  id: '/subscriptions',
+  path: '/subscriptions',
+  getParentRoute: () => ConfigureRouteRoute,
+} as any)
+const SignInIndexRoute = SignInIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SignInRouteRoute,
 } as any)
 const SignInSplatRoute = SignInSplatRouteImport.update({
   id: '/$',
   path: '/$',
   getParentRoute: () => SignInRouteRoute,
 } as any)
-const ConfigureSubscriptionsRoute = ConfigureSubscriptionsRouteImport.update({
-  id: '/subscriptions',
-  path: '/subscriptions',
-  getParentRoute: () => ConfigureRouteRoute,
+const SignUpIndexRoute = SignUpIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SignUpRouteRoute,
+} as any)
+const SignUpSplatRoute = SignUpSplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => SignUpRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -241,46 +241,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/subs': {
-      id: '/subs'
-      path: '/subs'
-      fullPath: '/subs'
-      preLoaderRoute: typeof SubsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/spends': {
-      id: '/spends'
-      path: '/spends'
-      fullPath: '/spends'
-      preLoaderRoute: typeof SpendsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboard': {
-      id: '/onboard'
-      path: '/onboard'
-      fullPath: '/onboard'
-      preLoaderRoute: typeof OnboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cal': {
-      id: '/cal'
-      path: '/cal'
-      fullPath: '/cal'
-      preLoaderRoute: typeof CalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ai': {
-      id: '/ai'
-      path: '/ai'
-      fullPath: '/ai'
-      preLoaderRoute: typeof AiRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$': {
@@ -290,18 +255,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sign-up': {
-      id: '/sign-up'
-      path: '/sign-up'
-      fullPath: '/sign-up'
-      preLoaderRoute: typeof SignUpRouteRouteImport
+    '/ai': {
+      id: '/ai'
+      path: '/ai'
+      fullPath: '/ai'
+      preLoaderRoute: typeof AiRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sign-in': {
-      id: '/sign-in'
-      path: '/sign-in'
-      fullPath: '/sign-in'
-      preLoaderRoute: typeof SignInRouteRouteImport
+    '/cal': {
+      id: '/cal'
+      path: '/cal'
+      fullPath: '/cal'
+      preLoaderRoute: typeof CalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/configure': {
@@ -311,26 +276,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConfigureRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/onboard': {
+      id: '/onboard'
+      path: '/onboard'
+      fullPath: '/onboard'
+      preLoaderRoute: typeof OnboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sign-up/': {
-      id: '/sign-up/'
-      path: '/'
-      fullPath: '/sign-up/'
-      preLoaderRoute: typeof SignUpIndexRouteImport
-      parentRoute: typeof SignUpRouteRoute
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/sign-in/': {
-      id: '/sign-in/'
-      path: '/'
-      fullPath: '/sign-in/'
-      preLoaderRoute: typeof SignInIndexRouteImport
-      parentRoute: typeof SignInRouteRoute
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-up': {
+      id: '/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof SignUpRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/spends': {
+      id: '/spends'
+      path: '/spends'
+      fullPath: '/spends'
+      preLoaderRoute: typeof SpendsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/subs': {
+      id: '/subs'
+      path: '/subs'
+      fullPath: '/subs'
+      preLoaderRoute: typeof SubsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/configure/': {
       id: '/configure/'
@@ -339,12 +325,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConfigureIndexRouteImport
       parentRoute: typeof ConfigureRouteRoute
     }
-    '/sign-up/$': {
-      id: '/sign-up/$'
-      path: '/$'
-      fullPath: '/sign-up/$'
-      preLoaderRoute: typeof SignUpSplatRouteImport
-      parentRoute: typeof SignUpRouteRoute
+    '/configure/subscriptions': {
+      id: '/configure/subscriptions'
+      path: '/subscriptions'
+      fullPath: '/configure/subscriptions'
+      preLoaderRoute: typeof ConfigureSubscriptionsRouteImport
+      parentRoute: typeof ConfigureRouteRoute
+    }
+    '/sign-in/': {
+      id: '/sign-in/'
+      path: '/'
+      fullPath: '/sign-in/'
+      preLoaderRoute: typeof SignInIndexRouteImport
+      parentRoute: typeof SignInRouteRoute
     }
     '/sign-in/$': {
       id: '/sign-in/$'
@@ -353,12 +346,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignInSplatRouteImport
       parentRoute: typeof SignInRouteRoute
     }
-    '/configure/subscriptions': {
-      id: '/configure/subscriptions'
-      path: '/subscriptions'
-      fullPath: '/configure/subscriptions'
-      preLoaderRoute: typeof ConfigureSubscriptionsRouteImport
-      parentRoute: typeof ConfigureRouteRoute
+    '/sign-up/': {
+      id: '/sign-up/'
+      path: '/'
+      fullPath: '/sign-up/'
+      preLoaderRoute: typeof SignUpIndexRouteImport
+      parentRoute: typeof SignUpRouteRoute
+    }
+    '/sign-up/$': {
+      id: '/sign-up/$'
+      path: '/$'
+      fullPath: '/sign-up/$'
+      preLoaderRoute: typeof SignUpSplatRouteImport
+      parentRoute: typeof SignUpRouteRoute
     }
   }
 }

@@ -14,13 +14,13 @@ import {
   TabsList,
   TabsTrigger,
 } from "@saascription/ui";
+import { flexRender } from "@tanstack/react-table";
 import {
-  type ColumnDef,
-  flexRender,
   getCoreRowModel,
   getPaginationRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
+  type LegacyColumnDef,
+  useLegacyTable,
+} from "@tanstack/react-table/legacy";
 import { useMemo, useState } from "react";
 import {
   apiSubscriptionToTableRow,
@@ -40,7 +40,10 @@ const tabTriggerClass =
   "group-data-[variant=line]/tabs-list:after:!bg-primary " +
   "group-data-[variant=line]/tabs-list:data-active:after:!bg-primary";
 
-function useSubscriptionColumns(): ColumnDef<SubscriptionTableRow, unknown>[] {
+function useSubscriptionColumns(): LegacyColumnDef<
+  SubscriptionTableRow,
+  unknown
+>[] {
   return useMemo(
     () => [
       {
@@ -211,7 +214,7 @@ export function SubscriptionsPage() {
 
   const columns = useSubscriptionColumns();
 
-  const table = useReactTable({
+  const table = useLegacyTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),

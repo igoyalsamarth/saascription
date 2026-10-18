@@ -28,11 +28,12 @@ wh.post("/", async (c) => {
   let evt: ClerkWebhookEvent;
   try {
     const verifier = new Webhook(secret);
-    evt = verifier.verify(payload, {
+    verifier.verify(payload, {
       "svix-id": svixId,
       "svix-timestamp": svixTimestamp,
       "svix-signature": svixSignature,
-    }) as ClerkWebhookEvent;
+    });
+    evt = JSON.parse(payload) as ClerkWebhookEvent;
   } catch {
     return c.json({ error: "Invalid webhook signature" }, 400);
   }
