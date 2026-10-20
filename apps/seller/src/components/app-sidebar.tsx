@@ -57,7 +57,12 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.to}>
                   <SidebarMenuButton
                     className="w-full"
-                    isActive={pathname === item.to}
+                    isActive={
+                      item.to === "/listings"
+                        ? pathname === "/listings" ||
+                          pathname.startsWith("/listings/")
+                        : pathname === item.to
+                    }
                     render={<Link to={item.to} />}
                   >
                     <HugeiconsIcon

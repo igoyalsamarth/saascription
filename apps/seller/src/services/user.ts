@@ -12,6 +12,7 @@ export type UserMe = {
   email: string;
   name: string | null;
   imageUrl: string | null;
+  admin: boolean;
 };
 
 export type UserMeResponse = {

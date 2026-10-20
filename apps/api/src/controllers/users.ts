@@ -5,6 +5,7 @@ export type UserRow = {
   email: string;
   name: string | null;
   image_url: string | null;
+  admin: number;
 };
 
 export type UserMeDbBundle = {
@@ -20,7 +21,7 @@ export async function getUserAndWorkspaceForOwner(
   const [userRes, workspaceRes] = await db.batch([
     db
       .prepare(
-        `SELECT id, email, name, image_url FROM users WHERE id = ? LIMIT 1`,
+        `SELECT id, email, name, image_url, admin FROM users WHERE id = ? LIMIT 1`,
       )
       .bind(ownerUserId),
     db

@@ -20,7 +20,8 @@ const SAAS_CATALOG_HAS_LINK_SQL = `(
 
 /**
  * Prefix/substring search on catalog names (case-insensitive). Empty or short queries return [].
- * Only rows with a website or icon URL are included so suggestions are display-ready.
+ * Only published rows with a website or icon URL are included so suggestions are display-ready.
+ * Seller submissions stay in `review` until a reviewer publishes them.
  */
 export async function searchSaasCatalogByName(
   db: D1Database,
@@ -39,6 +40,7 @@ export async function searchSaasCatalogByName(
     .prepare(
       `SELECT id, name FROM saas
        WHERE LOWER(name) LIKE LOWER(?)
+         AND status = 'published'
          AND ${SAAS_CATALOG_HAS_LINK_SQL}
        ORDER BY
          CASE WHEN LOWER(name) = LOWER(?) THEN 0 ELSE 1 END,

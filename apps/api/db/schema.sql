@@ -5,11 +5,13 @@ PRAGMA foreign_keys = ON;
 -- ---------------------------------------------------------------------------
 -- Users (auth profile: id from your IdP e.g. Clerk, plus display fields)
 -- ---------------------------------------------------------------------------
+-- admin: 1 when this user can publish seller listings that are in review.
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY NOT NULL,
   email TEXT NOT NULL,
   name TEXT,
   image_url TEXT,
+  admin INTEGER NOT NULL DEFAULT 0 CHECK (admin IN (0, 1)),
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE (email)
@@ -56,10 +58,14 @@ CREATE INDEX IF NOT EXISTS idx_workspace_emails_workspace
 -- ---------------------------------------------------------------------------
 -- SaaS catalog (subscriptions reference saas.id)
 --
--- categories: JSON array of string slugs, e.g. ["engineering","collaboration"].
--- At most 3 elements; enforce in application code when writing.
+-- categories: JSON array of up to 3 strings. Known slugs
+-- (engineering, collaboration, …) or one custom label the seller typed.
 -- created_by: Clerk user id of the seller who listed the product.
 -- NULL for catalog rows created from subscription entry (find-or-create).
+-- status:
+--   published — visible in the product catalog
+--   review    — seller submission waiting for an admin to publish it
+-- Catalog rows from subscription entry stay published.
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS saas (
   id TEXT PRIMARY KEY NOT NULL,
@@ -68,12 +74,37 @@ CREATE TABLE IF NOT EXISTS saas (
   icon_url TEXT,
   categories TEXT NOT NULL DEFAULT '[]',
   created_by TEXT,
+  status TEXT NOT NULL DEFAULT 'published' CHECK (
+    status IN ('review', 'published')
+  ),
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_saas_name ON saas (name);
 CREATE INDEX IF NOT EXISTS idx_saas_created_by ON saas (created_by);
+CREATE INDEX IF NOT EXISTS idx_saas_status ON saas (status);
+
+-- ---------------------------------------------------------------------------
+-- Seller package prices for a catalog row.
+-- amount_cents: integer in the smallest currency unit (USD cents).
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS saas_packages (
+  id TEXT PRIMARY KEY NOT NULL,
+  saas_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  amount_cents INTEGER NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'USD',
+  billing_interval TEXT NOT NULL DEFAULT 'monthly' CHECK (
+    billing_interval IN ('monthly', 'yearly')
+  ),
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (saas_id) REFERENCES saas(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_saas_packages_saas
+  ON saas_packages (saas_id, sort_order);
 
 -- ---------------------------------------------------------------------------
 -- Subscriptions: one row per tracked plan for a given workspace email + SaaS

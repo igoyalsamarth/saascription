@@ -25,6 +25,7 @@ usersRouter.get("/me", async (c) => {
       email: row.email,
       name: row.name,
       imageUrl: row.image_url,
+      admin: row.admin === 1,
     },
     workspace: workspace ? { id: workspace.id, name: workspace.name } : null,
   });
