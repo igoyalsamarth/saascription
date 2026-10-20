@@ -177,6 +177,27 @@ function mapRow(row: SellerSaasDbRow, packages: SellerPackage[]): SellerSaas {
   };
 }
 
+/** Stores a host or path. Strips a leading https://. Leaves http:// in place. */
+function normalizeWebsite(value: unknown): string | null {
+  if (value == null || value === "") {
+    return null;
+  }
+  if (typeof value !== "string") {
+    fail(400, "Website must be text.");
+  }
+  const stripped = value.trim().replace(/^https:\/\//i, "");
+  if (!stripped) {
+    return null;
+  }
+  if (stripped.length > MAX_URL_LEN) {
+    fail(400, "Website is too long.");
+  }
+  if (/\s/.test(stripped)) {
+    fail(400, "Website cannot contain spaces.");
+  }
+  return stripped;
+}
+
 function optionalUrl(value: unknown, label: string): string | null {
   if (value == null || value === "") {
     return null;
@@ -217,15 +238,12 @@ function canonicalCategory(raw: string): string {
 }
 
 function parseCategories(value: unknown): string[] {
-  if (value == null) {
-    return [];
-  }
-  if (!Array.isArray(value)) {
+  const items = value == null ? [] : value;
+  if (!Array.isArray(items)) {
     fail(400, "Categories must be a list.");
   }
   const slugs: string[] = [];
-  let custom: string | null = null;
-  for (const item of value) {
+  for (const item of items) {
     if (typeof item !== "string") {
       fail(400, "Enter a category using letters and numbers.");
     }
@@ -245,16 +263,18 @@ function parseCategories(value: unknown): string[] {
         "Enter a category using letters, numbers, and spaces (2–40 characters).",
       );
     }
-    if (custom && custom.toLowerCase() !== canonical.toLowerCase()) {
-      fail(400, "Add at most one custom category.");
-    }
-    if (!custom) {
-      custom = canonical;
+    const duplicate = slugs.some(
+      (slug) => slug.toLowerCase() === canonical.toLowerCase(),
+    );
+    if (!duplicate) {
       slugs.push(canonical);
     }
   }
   if (slugs.length > MAX_CATEGORIES) {
     fail(400, "Choose at most 3 categories.");
+  }
+  if (!slugs.some((slug) => CATEGORY_SLUGS.has(slug))) {
+    fail(400, "Choose at least one category from the list.");
   }
   return slugs;
 }
@@ -318,7 +338,7 @@ export function parseSellerSaasBody(body: unknown): SellerSaasInput {
   }
   return {
     name,
-    websiteUrl: optionalUrl(record.websiteUrl, "Website"),
+    websiteUrl: normalizeWebsite(record.websiteUrl),
     iconUrl: optionalUrl(record.iconUrl, "Icon URL"),
     categories: parseCategories(record.categories),
     packages: parsePackages(record.packages),

@@ -1,3 +1,5 @@
+import { Cancel01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Button,
   buttonVariants,
@@ -30,7 +32,6 @@ import { PageHeader } from "./page-header";
 
 type FormErrors = {
   name?: string;
-  websiteUrl?: string;
   iconUrl?: string;
   customCategory?: string;
   packages?: string;
@@ -47,6 +48,14 @@ const selectClassName =
   "h-7 w-full rounded-md border border-input bg-input/20 px-2 text-xs/relaxed outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 dark:bg-input/30";
 
 const MAX_PRICES = 12;
+
+function websiteForStorage(value: string) {
+  return value.trim().replace(/^https:\/\//i, "");
+}
+
+function isInsecureHttpWebsite(value: string) {
+  return /^http:\/\//i.test(value.trim());
+}
 
 function isHttpUrl(value: string) {
   try {
@@ -89,17 +98,75 @@ function dollarsToCents(raw: string) {
   return cents;
 }
 
+const MAX_LISTING_CATEGORIES = 3;
+
+function cleanCategoryLabel(value: string) {
+  return value.trim().replace(/\s+/g, " ");
+}
+
+function knownSlugForLabel(value: string): ListingCategory | null {
+  const key = value.toLowerCase();
+  return (
+    LISTING_CATEGORIES.find(
+      (category) =>
+        category.slug === key || category.label.toLowerCase() === key,
+    )?.slug ?? null
+  );
+}
+
+function isCustomCategoryLabel(value: string) {
+  return (
+    value.length >= 2 &&
+    value.length <= 40 &&
+    /^[\p{L}\p{N}][\p{L}\p{N}&+.' -]*$/u.test(value)
+  );
+}
+
+function placeCategory(
+  raw: string,
+  known: ListingCategory[],
+  custom: string[],
+): { known: ListingCategory[]; custom: string[]; error?: string } {
+  const label = cleanCategoryLabel(raw);
+  if (!label) {
+    return { known, custom };
+  }
+  const slug = knownSlugForLabel(label);
+  if (slug) {
+    if (known.includes(slug)) {
+      return { known, custom };
+    }
+    if (known.length + custom.length >= MAX_LISTING_CATEGORIES) {
+      return { known, custom, error: "Choose at most 3 categories." };
+    }
+    return { known: [...known, slug], custom };
+  }
+  if (!isCustomCategoryLabel(label)) {
+    return {
+      known,
+      custom,
+      error:
+        "Enter a category using letters, numbers, and spaces (2–40 characters).",
+    };
+  }
+  if (custom.some((tag) => tag.toLowerCase() === label.toLowerCase())) {
+    return { known, custom };
+  }
+  if (known.length + custom.length >= MAX_LISTING_CATEGORIES) {
+    return { known, custom, error: "Choose at most 3 categories." };
+  }
+  return { known, custom: [...custom, label] };
+}
+
 function splitCategories(categories: string[]) {
   const known: ListingCategory[] = [];
-  let custom = "";
+  const custom: string[] = [];
   for (const category of categories) {
     if (isKnownCategory(category)) {
       known.push(category);
       continue;
     }
-    if (!custom) {
-      custom = category;
-    }
+    custom.push(category);
   }
   return { known, custom };
 }
@@ -145,25 +212,39 @@ export function ListingForm({
   const [otherSelected, setOtherSelected] = useState(
     startingCategories.custom.length > 0,
   );
-  const [customCategory, setCustomCategory] = useState(
+  const [customTags, setCustomTags] = useState<string[]>(
     startingCategories.custom,
   );
+  const [customDraft, setCustomDraft] = useState("");
   const [prices, setPrices] = useState<PriceRow[]>(() =>
     rowsFromListing(initial),
   );
   const [errors, setErrors] = useState<FormErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
 
-  const categoryLimit = otherSelected ? 2 : 3;
+  const slotsUsed = categories.length + customTags.length;
 
   function toggleCategory(slug: ListingCategory) {
     setCategories((current) => {
       if (current.includes(slug)) {
+        if (current.length === 1) {
+          setErrors((existing) => ({
+            ...existing,
+            customCategory: "Choose at least one category from the list.",
+          }));
+          return current;
+        }
         return current.filter((item) => item !== slug);
       }
-      if (current.length >= categoryLimit) {
+      if (current.length + customTags.length >= MAX_LISTING_CATEGORIES) {
         return current;
       }
+      setErrors((existing) =>
+        existing.customCategory ===
+        "Choose at least one category from the list."
+          ? { ...existing, customCategory: undefined }
+          : existing,
+      );
       return [...current, slug];
     });
   }
@@ -171,13 +252,46 @@ export function ListingForm({
   function toggleOther() {
     if (otherSelected) {
       setOtherSelected(false);
-      setCustomCategory("");
+      setCustomTags([]);
+      setCustomDraft("");
       return;
     }
-    if (categories.length >= 3) {
+    if (categories.length >= MAX_LISTING_CATEGORIES) {
       return;
     }
     setOtherSelected(true);
+  }
+
+  function applyCustomText(value: string, keepRemainder: boolean) {
+    const pieces = value.split(",");
+    const remainder = keepRemainder ? (pieces.pop() ?? "") : "";
+    let nextKnown = categories;
+    let nextCustom = customTags;
+    for (let index = 0; index < pieces.length; index++) {
+      const piece = pieces[index] ?? "";
+      const placed = placeCategory(piece, nextKnown, nextCustom);
+      if (placed.error && cleanCategoryLabel(piece)) {
+        setCategories(nextKnown);
+        setCustomTags(nextCustom);
+        setCustomDraft(
+          [piece, ...pieces.slice(index + 1), remainder]
+            .filter((part) => part.length > 0)
+            .join(","),
+        );
+        setErrors((current) => ({
+          ...current,
+          customCategory: placed.error,
+        }));
+        return { known: nextKnown, custom: nextCustom, error: placed.error };
+      }
+      nextKnown = placed.known;
+      nextCustom = placed.custom;
+    }
+    setCategories(nextKnown);
+    setCustomTags(nextCustom);
+    setCustomDraft(remainder);
+    setErrors((current) => ({ ...current, customCategory: undefined }));
+    return { known: nextKnown, custom: nextCustom };
   }
 
   function updatePrice(key: string, patch: Partial<PriceRow>) {
@@ -190,21 +304,27 @@ export function ListingForm({
     event.preventDefault();
     const nextErrors: FormErrors = {};
     const trimmedName = name.trim();
-    const trimmedWebsite = websiteUrl.trim();
+    const trimmedWebsite = websiteForStorage(websiteUrl);
     const trimmedIcon = iconUrl.trim();
-    const trimmedCustom = customCategory.trim().replace(/\s+/g, " ");
-
     if (trimmedName.length < 2) {
       nextErrors.name = "Enter a product name.";
-    }
-    if (trimmedWebsite && !isHttpUrl(trimmedWebsite)) {
-      nextErrors.websiteUrl = "Enter a full URL starting with https://.";
     }
     if (trimmedIcon && !isHttpUrl(trimmedIcon)) {
       nextErrors.iconUrl = "Enter a full image URL starting with https://.";
     }
-    if (otherSelected && trimmedCustom.length < 2) {
-      nextErrors.customCategory = "Enter your category.";
+    let submitKnown = categories;
+    let submitCustom = customTags;
+    if (otherSelected && cleanCategoryLabel(customDraft)) {
+      const placed = placeCategory(customDraft, submitKnown, submitCustom);
+      if (placed.error) {
+        nextErrors.customCategory = placed.error;
+      } else {
+        submitKnown = placed.known;
+        submitCustom = placed.custom;
+      }
+    }
+    if (submitKnown.length === 0) {
+      nextErrors.customCategory = "Choose at least one category from the list.";
     }
 
     const packages: SellerSaasInput["packages"] = [];
@@ -233,10 +353,7 @@ export function ListingForm({
       return;
     }
 
-    const nextCategories: string[] = [...categories];
-    if (otherSelected && trimmedCustom) {
-      nextCategories.push(trimmedCustom);
-    }
+    const nextCategories: string[] = [...submitKnown, ...submitCustom];
 
     try {
       await onSubmit({
@@ -279,20 +396,24 @@ export function ListingForm({
                   />
                   <FieldError>{errors.name}</FieldError>
                 </Field>
-                <Field data-invalid={errors.websiteUrl ? true : undefined}>
+                <Field>
                   <FieldLabel htmlFor="saas-website">Website</FieldLabel>
                   <Input
                     id="saas-website"
                     value={websiteUrl}
                     onChange={(event) => setWebsiteUrl(event.target.value)}
-                    placeholder="https://example.com"
-                    aria-invalid={errors.websiteUrl ? true : undefined}
+                    placeholder="example.com"
                     autoComplete="off"
                   />
                   <FieldDescription>
-                    Optional. Used when this product appears in the catalog.
+                    Optional. A domain is enough. An https:// prefix is removed
+                    when you save.
                   </FieldDescription>
-                  <FieldError>{errors.websiteUrl}</FieldError>
+                  {isInsecureHttpWebsite(websiteUrl) ? (
+                    <p className="text-xs text-amber-700 dark:text-amber-400">
+                      This address uses http://. It will be saved that way.
+                    </p>
+                  ) : null}
                 </Field>
                 <Field data-invalid={errors.iconUrl ? true : undefined}>
                   <FieldLabel htmlFor="saas-icon">Icon URL</FieldLabel>
@@ -309,7 +430,7 @@ export function ListingForm({
                 <Field data-invalid={errors.customCategory ? true : undefined}>
                   <FieldLabel>Categories</FieldLabel>
                   <FieldDescription>
-                    Choose up to 3. Use Other if yours is not listed.
+                    Choose up to 3, including at least one from this list.
                   </FieldDescription>
                   <div className="flex flex-wrap gap-2">
                     {LISTING_CATEGORIES.map((category) => {
@@ -321,7 +442,7 @@ export function ListingForm({
                           size="sm"
                           variant={selected ? "default" : "outline"}
                           disabled={
-                            !selected && categories.length >= categoryLimit
+                            !selected && slotsUsed >= MAX_LISTING_CATEGORIES
                           }
                           onClick={() => toggleCategory(category.slug)}
                         >
@@ -333,24 +454,79 @@ export function ListingForm({
                       type="button"
                       size="sm"
                       variant={otherSelected ? "default" : "outline"}
-                      disabled={!otherSelected && categories.length >= 3}
+                      disabled={
+                        !otherSelected &&
+                        categories.length >= MAX_LISTING_CATEGORIES
+                      }
                       onClick={toggleOther}
                     >
                       Other
                     </Button>
                   </div>
                   {otherSelected ? (
-                    <Input
-                      value={customCategory}
-                      onChange={(event) =>
-                        setCustomCategory(event.target.value)
-                      }
-                      placeholder="Your category"
-                      aria-label="Custom category"
-                      aria-invalid={errors.customCategory ? true : undefined}
-                      autoComplete="off"
-                      maxLength={40}
-                    />
+                    <div
+                      className={cn(
+                        "flex min-h-7 w-full flex-wrap items-center gap-1 rounded-md border border-input bg-input/20 px-1.5 py-1 focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30 dark:bg-input/30",
+                        errors.customCategory &&
+                          "border-destructive ring-2 ring-destructive/20",
+                      )}
+                    >
+                      {customTags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="inline-flex h-5 items-center gap-1 rounded-md bg-primary px-1.5 text-xs text-primary-foreground"
+                        >
+                          {tag}
+                          <button
+                            type="button"
+                            className="rounded-sm text-primary-foreground/80 hover:text-primary-foreground"
+                            aria-label={`Remove ${tag}`}
+                            onClick={() =>
+                              setCustomTags((current) =>
+                                current.filter((item) => item !== tag),
+                              )
+                            }
+                          >
+                            <HugeiconsIcon
+                              icon={Cancel01Icon}
+                              className="size-3"
+                            />
+                          </button>
+                        </span>
+                      ))}
+                      <input
+                        value={customDraft}
+                        onChange={(event) =>
+                          applyCustomText(event.target.value, true)
+                        }
+                        onBlur={() => {
+                          if (customDraft.trim()) {
+                            applyCustomText(customDraft, false);
+                          }
+                        }}
+                        onKeyDown={(event) => {
+                          if (
+                            event.key === "Backspace" &&
+                            customDraft.length === 0 &&
+                            customTags.length > 0
+                          ) {
+                            event.preventDefault();
+                            setCustomTags((current) => current.slice(0, -1));
+                          }
+                          if (event.key === "Enter" && customDraft.trim()) {
+                            event.preventDefault();
+                            applyCustomText(customDraft, false);
+                          }
+                        }}
+                        placeholder={
+                          customTags.length === 0 ? "Your category" : ""
+                        }
+                        aria-label="Custom category"
+                        aria-invalid={errors.customCategory ? true : undefined}
+                        autoComplete="off"
+                        className="h-5 min-w-24 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground md:text-xs/relaxed"
+                      />
+                    </div>
                   ) : null}
                   <FieldError>{errors.customCategory}</FieldError>
                 </Field>

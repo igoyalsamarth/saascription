@@ -1,4 +1,5 @@
 import {
+  Add01Icon,
   Dollar01Icon,
   LayerIcon,
   UserMultipleIcon,
@@ -144,7 +145,8 @@ export function DashboardPage() {
             to="/add"
             className={buttonVariants({ variant: "default", size: "sm" })}
           >
-            Add SaaS
+            <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
+            Add Product
           </Link>
         }
       />

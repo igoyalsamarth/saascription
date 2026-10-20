@@ -12,11 +12,35 @@ test("accepts a seller listing and drops a blank icon URL", () => {
     }),
   ).toEqual({
     name: "Harbor",
-    websiteUrl: "https://harbor.example",
+    websiteUrl: "harbor.example",
     iconUrl: null,
     categories: ["security"],
     packages: [],
   });
+});
+
+test("keeps a bare domain and an http website, and strips https", () => {
+  expect(
+    parseSellerSaasBody({
+      name: "Harbor",
+      websiteUrl: "harbor.example",
+      categories: ["security"],
+    }).websiteUrl,
+  ).toBe("harbor.example");
+  expect(
+    parseSellerSaasBody({
+      name: "Harbor",
+      websiteUrl: "http://harbor.example",
+      categories: ["security"],
+    }).websiteUrl,
+  ).toBe("http://harbor.example");
+  expect(
+    parseSellerSaasBody({
+      name: "Harbor",
+      websiteUrl: "HTTPS://harbor.example/pricing",
+      categories: ["security"],
+    }).websiteUrl,
+  ).toBe("harbor.example/pricing");
 });
 
 test("accepts one custom category and maps a known label to its slug", () => {
@@ -28,13 +52,31 @@ test("accepts one custom category and maps a known label to its slug", () => {
   ).toEqual(["engineering", "Customer success"]);
 });
 
-test("rejects a second custom category", () => {
+test("accepts more than one custom category beside a listed one", () => {
+  expect(
+    parseSellerSaasBody({
+      name: "Harbor",
+      categories: ["design", "People ops", "Legal", "people ops"],
+    }).categories,
+  ).toEqual(["design", "People ops", "Legal"]);
+});
+
+test("rejects categories that are only custom", () => {
   expect(() =>
     parseSellerSaasBody({
       name: "Harbor",
-      categories: ["People ops", "Legal"],
+      categories: ["People ops"],
     }),
-  ).toThrow("Add at most one custom category.");
+  ).toThrow("Choose at least one category from the list.");
+});
+
+test("rejects more than three categories", () => {
+  expect(() =>
+    parseSellerSaasBody({
+      name: "Harbor",
+      categories: ["engineering", "design", "People ops", "Legal"],
+    }),
+  ).toThrow("Choose at most 3 categories.");
 });
 
 test("rejects a category made only of symbols", () => {
@@ -47,6 +89,7 @@ test("accepts package prices in cents", () => {
   expect(
     parseSellerSaasBody({
       name: "Harbor",
+      categories: ["security"],
       packages: [
         { name: " Pro ", amountCents: 2900, billingInterval: "monthly" },
         { name: "Team", amountCents: 0, billingInterval: "yearly" },
@@ -72,6 +115,7 @@ test("rejects a price that is not whole cents", () => {
   expect(() =>
     parseSellerSaasBody({
       name: "Harbor",
+      categories: ["security"],
       packages: [
         { name: "Pro", amountCents: 29.5, billingInterval: "monthly" },
       ],

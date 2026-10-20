@@ -1,4 +1,11 @@
 import {
+  Add01Icon,
+  Cancel01Icon,
+  Delete02Icon,
+  PencilIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
   Badge,
   Button,
   buttonVariants,
@@ -14,6 +21,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from "@saascription/ui";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
@@ -122,7 +132,8 @@ export function ListingsPage() {
             to="/add"
             className={buttonVariants({ variant: "default", size: "sm" })}
           >
-            Add SaaS
+            <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
+            Add Product
           </Link>
         }
       />
@@ -212,7 +223,9 @@ export function ListingsPage() {
                       Monthly revenue
                     </TableHead>
                     <TableHead className="text-right">Listed</TableHead>
-                    <TableHead className="pr-4 text-right">Actions</TableHead>
+                    <TableHead className="pr-4">
+                      <span className="sr-only">Edit or delete</span>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -265,11 +278,11 @@ export function ListingsPage() {
                         {listedOn.format(new Date(listing.createdAt))}
                       </TableCell>
                       <TableCell className="pr-4">
-                        <div className="flex flex-wrap justify-end gap-1">
+                        <div className="flex items-center justify-end gap-1">
                           {isAdmin && listing.status === "review" ? (
                             <Button
                               type="button"
-                              size="xs"
+                              size="sm"
                               disabled={
                                 publishListing.isPending &&
                                 publishListing.variables === listing.id
@@ -281,47 +294,93 @@ export function ListingsPage() {
                               Publish
                             </Button>
                           ) : null}
-                          <Link
-                            to="/listings/$id/edit"
-                            params={{ id: listing.id }}
-                            className={buttonVariants({
-                              variant: "outline",
-                              size: "xs",
-                            })}
-                          >
-                            Edit
-                          </Link>
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <Link
+                                  to="/listings/$id/edit"
+                                  params={{ id: listing.id }}
+                                  aria-label={`Edit ${listing.name}`}
+                                  className={buttonVariants({
+                                    variant: "ghost",
+                                    size: "icon-sm",
+                                  })}
+                                />
+                              }
+                            >
+                              <HugeiconsIcon
+                                icon={PencilIcon}
+                                className="size-4"
+                              />
+                            </TooltipTrigger>
+                            <TooltipContent>Edit</TooltipContent>
+                          </Tooltip>
                           {confirmId === listing.id ? (
                             <>
-                              <Button
-                                type="button"
-                                size="xs"
-                                variant="destructive"
-                                disabled={removeListing.isPending}
-                                onClick={() => {
-                                  void onDelete(listing.id);
-                                }}
-                              >
-                                Confirm
-                              </Button>
-                              <Button
-                                type="button"
-                                size="xs"
-                                variant="ghost"
-                                onClick={() => setConfirmId(null)}
-                              >
-                                Cancel
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger
+                                  render={
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon-sm"
+                                      aria-label={`Confirm delete ${listing.name}`}
+                                      disabled={removeListing.isPending}
+                                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                      onClick={() => {
+                                        void onDelete(listing.id);
+                                      }}
+                                    />
+                                  }
+                                >
+                                  <HugeiconsIcon
+                                    icon={Delete02Icon}
+                                    className="size-4"
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent>Confirm delete</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger
+                                  render={
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon-sm"
+                                      aria-label="Cancel delete"
+                                      onClick={() => setConfirmId(null)}
+                                    />
+                                  }
+                                >
+                                  <HugeiconsIcon
+                                    icon={Cancel01Icon}
+                                    className="size-3.5"
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent>Cancel</TooltipContent>
+                              </Tooltip>
                             </>
                           ) : (
-                            <Button
-                              type="button"
-                              size="xs"
-                              variant="ghost"
-                              onClick={() => setConfirmId(listing.id)}
-                            >
-                              Delete
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger
+                                render={
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    aria-label={`Delete ${listing.name}`}
+                                    className="text-destructive/80 hover:bg-destructive/10 hover:text-destructive"
+                                    onClick={() => setConfirmId(listing.id)}
+                                  />
+                                }
+                              >
+                                <HugeiconsIcon
+                                  icon={Delete02Icon}
+                                  className="size-4"
+                                />
+                              </TooltipTrigger>
+                              <TooltipContent>Delete</TooltipContent>
+                            </Tooltip>
                           )}
                         </div>
                       </TableCell>
