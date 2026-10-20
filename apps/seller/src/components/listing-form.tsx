@@ -32,6 +32,7 @@ import { PageHeader } from "./page-header";
 
 type FormErrors = {
   name?: string;
+  websiteUrl?: string;
   iconUrl?: string;
   customCategory?: string;
   packages?: string;
@@ -309,6 +310,9 @@ export function ListingForm({
     if (trimmedName.length < 2) {
       nextErrors.name = "Enter a product name.";
     }
+    if (isInsecureHttpWebsite(websiteUrl)) {
+      nextErrors.websiteUrl = "http:// addresses are not allowed.";
+    }
     if (trimmedIcon && !isHttpUrl(trimmedIcon)) {
       nextErrors.iconUrl = "Enter a full image URL starting with https://.";
     }
@@ -396,24 +400,21 @@ export function ListingForm({
                   />
                   <FieldError>{errors.name}</FieldError>
                 </Field>
-                <Field>
+                <Field data-invalid={errors.websiteUrl ? true : undefined}>
                   <FieldLabel htmlFor="saas-website">Website</FieldLabel>
                   <Input
                     id="saas-website"
                     value={websiteUrl}
                     onChange={(event) => setWebsiteUrl(event.target.value)}
                     placeholder="example.com"
+                    aria-invalid={errors.websiteUrl ? true : undefined}
                     autoComplete="off"
                   />
                   <FieldDescription>
                     Optional. A domain is enough. An https:// prefix is removed
                     when you save.
                   </FieldDescription>
-                  {isInsecureHttpWebsite(websiteUrl) ? (
-                    <p className="text-xs text-amber-700 dark:text-amber-400">
-                      This address uses http://. It will be saved that way.
-                    </p>
-                  ) : null}
+                  <FieldError>{errors.websiteUrl}</FieldError>
                 </Field>
                 <Field data-invalid={errors.iconUrl ? true : undefined}>
                   <FieldLabel htmlFor="saas-icon">Icon URL</FieldLabel>

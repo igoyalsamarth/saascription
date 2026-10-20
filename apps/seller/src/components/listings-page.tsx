@@ -3,6 +3,7 @@ import {
   Cancel01Icon,
   Delete02Icon,
   PencilIcon,
+  Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -169,19 +170,16 @@ export function ListingsPage() {
                     </p>
                     <ListingFacts listing={listing} />
                   </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={
+                  <PublishIconButton
+                    name={listing.name}
+                    pending={
                       publishListing.isPending &&
                       publishListing.variables === listing.id
                     }
                     onClick={() => {
                       void onPublish(listing.id);
                     }}
-                  >
-                    Publish
-                  </Button>
+                  />
                 </div>
               ))}
             </CardContent>
@@ -280,19 +278,16 @@ export function ListingsPage() {
                       <TableCell className="pr-4">
                         <div className="flex items-center justify-end gap-1">
                           {isAdmin && listing.status === "review" ? (
-                            <Button
-                              type="button"
-                              size="sm"
-                              disabled={
+                            <PublishIconButton
+                              name={listing.name}
+                              pending={
                                 publishListing.isPending &&
                                 publishListing.variables === listing.id
                               }
                               onClick={() => {
                                 void onPublish(listing.id);
                               }}
-                            >
-                              Publish
-                            </Button>
+                            />
                           ) : null}
                           <Tooltip>
                             <TooltipTrigger
@@ -428,6 +423,37 @@ function PackageList({ packages }: { packages: SellerListing["packages"] }) {
         </span>
       ) : null}
     </div>
+  );
+}
+
+function PublishIconButton({
+  name,
+  pending,
+  onClick,
+}: {
+  name: string;
+  pending: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Publish ${name}`}
+            disabled={pending}
+            className="text-primary hover:bg-primary/10 hover:text-primary"
+            onClick={onClick}
+          />
+        }
+      >
+        <HugeiconsIcon icon={Tick02Icon} className="size-4" />
+      </TooltipTrigger>
+      <TooltipContent>Publish</TooltipContent>
+    </Tooltip>
   );
 }
 

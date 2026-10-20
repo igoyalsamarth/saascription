@@ -177,7 +177,7 @@ function mapRow(row: SellerSaasDbRow, packages: SellerPackage[]): SellerSaas {
   };
 }
 
-/** Stores a host or path. Strips a leading https://. Leaves http:// in place. */
+/** Stores a host or path. Strips a leading https://. Rejects http://. */
 function normalizeWebsite(value: unknown): string | null {
   if (value == null || value === "") {
     return null;
@@ -185,7 +185,11 @@ function normalizeWebsite(value: unknown): string | null {
   if (typeof value !== "string") {
     fail(400, "Website must be text.");
   }
-  const stripped = value.trim().replace(/^https:\/\//i, "");
+  const trimmed = value.trim();
+  if (/^http:\/\//i.test(trimmed)) {
+    fail(400, "http:// addresses are not allowed.");
+  }
+  const stripped = trimmed.replace(/^https:\/\//i, "");
   if (!stripped) {
     return null;
   }

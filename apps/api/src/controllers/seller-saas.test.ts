@@ -19,7 +19,7 @@ test("accepts a seller listing and drops a blank icon URL", () => {
   });
 });
 
-test("keeps a bare domain and an http website, and strips https", () => {
+test("keeps a bare domain, strips https, and rejects http", () => {
   expect(
     parseSellerSaasBody({
       name: "Harbor",
@@ -27,13 +27,13 @@ test("keeps a bare domain and an http website, and strips https", () => {
       categories: ["security"],
     }).websiteUrl,
   ).toBe("harbor.example");
-  expect(
+  expect(() =>
     parseSellerSaasBody({
       name: "Harbor",
       websiteUrl: "http://harbor.example",
       categories: ["security"],
-    }).websiteUrl,
-  ).toBe("http://harbor.example");
+    }),
+  ).toThrow("http:// addresses are not allowed.");
   expect(
     parseSellerSaasBody({
       name: "Harbor",
